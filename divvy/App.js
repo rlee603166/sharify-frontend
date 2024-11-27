@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'react-native';
 import WelcomeScreen from './screens/auth/WelcomeScreen';
 import LoginScreen from './screens/auth/LoginScreen';
+import { UserProvider } from './UserProvider';
 
 const AuthStack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator();
@@ -60,25 +61,27 @@ function MainNavigator() {
 
 export default function App() {
   return (
-    <NavigationContainer theme={MyTheme}>
-      <StatusBar barStyle="dark-content" backgroundColor="white" />
-      <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-          <RootStack.Screen 
-            name="Auth"
-            component={AuthNavigator}
-            options={{ headerShown: false }}
-          />
-          <RootStack.Screen 
-            name="Main"
-            component={MainNavigator}
-            options={{ headerShown: false }}
-          />
+    <UserProvider>
+      <NavigationContainer theme={MyTheme}>
+        <StatusBar barStyle="dark-content" backgroundColor="white" />
+        <RootStack.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+            <RootStack.Screen 
+              name="Auth"
+              component={AuthNavigator}
+              options={{ headerShown: false }}
+            />
+            <RootStack.Screen 
+              name="Main"
+              component={MainNavigator}
+              options={{ headerShown: false }}
+            />
 
-      </RootStack.Navigator>
-    </NavigationContainer>
+        </RootStack.Navigator>
+      </NavigationContainer>
+    </UserProvider>
   );
 }

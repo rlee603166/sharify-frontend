@@ -1,57 +1,47 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import theme from '../../theme';
 
-const PhoneInput = ({ onSubmit }) => {
-    const [countryCode, setCountryCode] = useState('1');
-    const [phoneNumber, setPhoneNumber] = useState('');
+const UsernameInput = ({ onSubmit }) => {
+    const [username, setUsername] = useState('');
     const [errorMessage, setErrorMessage] = useState(null);
     const [isChecking, setIsChecking] = useState(false);
-    const countryCodeRef = useRef(null);
-    const phoneNumberRef = useRef(null);
 
-    const formatPhoneNumber = (text) => {
-        const cleaned = text.replace(/\D/g, '');
-        if (cleaned.length === 0) return '';
-        if (cleaned.length <= 3) return `(${cleaned}`;
-        if (cleaned.length <= 6) return `(${cleaned.slice(0,3)}) ${cleaned.slice(3)}`;
-        return `(${cleaned.slice(0,3)}) ${cleaned.slice(3,6)}-${cleaned.slice(6,10)}`;
-    };
-      
-    const handlePhoneChange = (text) => {
-        const cleaned = text.replace(/\D/g, '');
+    const handleUsernameChange = useCallback((text) => {
+        setUsername(text);
+        setErrorMessage(null);
+    }, []);
+    
+    const checkUserAndProceed = useCallback(async () => {
+        if (!username.trim()) return;
         
-        if (cleaned.length <= 10) {
-            setPhoneNumber(cleaned);
-        }
-    };
-
-    const checkPhoneAndProceed = async () => {
         setIsChecking(true);
         setErrorMessage(null);
         
         try {
-            const formattedPhone = `+${countryCode}${phoneNumber}`;
-            await onSubmit(formattedPhone);
+            await onSubmit(username);
         } catch (error) {
             setErrorMessage(error.message || 'An error occurred');
         } finally {
             setIsChecking(false);
         }
-    };
+    }, [username, onSubmit]);
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Enter your phone</Text>
+            <Text style={styles.title}>Enter your Venmo Username:</Text>
 
             <TextInput
-                ref={phoneNumberRef}
                 style={styles.phoneInput}
-                value={phoneNumber === '' ? '' : formatPhoneNumber(phoneNumber)}
-                onChangeText={handlePhoneChange}
-                keyboardType="numeric"
-                placeholder="Mobile Number"
+                value={username}
+                onChangeText={handleUsernameChange}
+                keyboardType="default"
+                placeholder="Venmo Username"
                 placeholderTextColor="#999"
+                maxLength={50}
+                autoCapitalize="none"
+                autoCorrect={false}
+
             />
 
             {errorMessage && (
@@ -62,12 +52,10 @@ const PhoneInput = ({ onSubmit }) => {
                 <TouchableOpacity
                     style={[
                         styles.button,
-                        phoneNumber.length === 10 && !isChecking
-                        ? styles.buttonEnabled
-                        : styles.buttonDisabled
+                        isChecking ? styles.buttonDisabled : styles.buttonEnabled
                     ]}
-                    onPress={checkPhoneAndProceed}
-                    disabled={phoneNumber.length !== 10 || isChecking}
+                    onPress={checkUserAndProceed}
+                    disabled={isChecking || username.length === 0}
                 >
                 <Text style={styles.buttonText}>
                     {isChecking ? 'Checking...' : 'Next'}
@@ -138,7 +126,7 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
         marginTop: 'auto',
-        paddingHorizontal: 24,
+        paddingHorizontal: 10,
         paddingBottom: 32,
     },
     button: {
@@ -163,4 +151,5 @@ const styles = StyleSheet.create({
     }
 });
 
-export default PhoneInput;
+
+export default React.memo(UsernameInput);
