@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  StatusBar, 
-  Platform 
+    View, 
+    Text, 
+    StyleSheet, 
+    TouchableOpacity, 
+    SafeAreaView, 
+    StatusBar, 
+    Platform 
 } from "react-native";
 import UsernameInput from "../../components/auth/UsernameInput";
 import SMSVerificationView from "../../components/auth/SMSVerificationView";

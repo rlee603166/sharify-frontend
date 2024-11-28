@@ -1,14 +1,13 @@
 import React from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StatusBar } from 'react-native';
-import WelcomeScreen from './screens/auth/WelcomeScreen';
-import LoginScreen from './screens/auth/LoginScreen';
-import { UserProvider } from './UserProvider';
+import AppNavigation from './navigation/AppNavigator';
 
-const AuthStack = createNativeStackNavigator();
+import { UserProvider } from './UserProvider';
+import { useUser } from './UserProvider';
+
+
 const RootStack = createNativeStackNavigator();
-const MainStack = createNativeStackNavigator();
 
 // Define a custom theme
 const MyTheme = {
@@ -23,65 +22,12 @@ const MyTheme = {
   },
 };
 
-function AuthNavigator() {
-  return (
-    <AuthStack.Navigator
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: 'white' },
-      }}
-    >
-      <AuthStack.Screen 
-        name="Welcome" 
-        component={WelcomeScreen} 
-      />
-      <AuthStack.Screen 
-        name="Login" 
-        component={LoginScreen}
-        options={{
-          presentation: 'modal',
-          animation: 'slide_from_bottom',
-        }}
-      />
-    </AuthStack.Navigator>
-  );
-}
 
-function MainNavigator() {
-  return (
-    <MainStack.Navigator
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: 'white'},
-      }}
-    >
-    </MainStack.Navigator>
-  )
-}
 
 export default function App() {
   return (
     <UserProvider>
-      <NavigationContainer theme={MyTheme}>
-        <StatusBar barStyle="dark-content" backgroundColor="white" />
-        <RootStack.Navigator
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-            <RootStack.Screen 
-              name="Auth"
-              component={AuthNavigator}
-              options={{ headerShown: false }}
-            />
-            <RootStack.Screen 
-              name="Main"
-              component={MainNavigator}
-              options={{ headerShown: false }}
-            />
-
-        </RootStack.Navigator>
-      </NavigationContainer>
+      <AppNavigation />
     </UserProvider>
   );
 }
