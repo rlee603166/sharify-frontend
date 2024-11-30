@@ -1,19 +1,23 @@
 import React from "react";
 import { SafeAreaView, StyleSheet } from "react-native";
 import ReceiptView from "./ReceiptView";
+import ReviewScreen from "../../components/receipt/ReviewScreen";
+import ReviewWrapper from "./ReviewWrapper";
 
 const TestScreen = () => {
   const [isLoading, setIsLoading] = React.useState(false);
 
   return (
     <SafeAreaView style={styles.container}>
-      <ReceiptView
+      {/* <ReceiptView
         // group={mockGroup}
         // transaction={mockTransaction}
         isLoading={isLoading}
         // onUpdateItem={handleUpdateItem}
         // onSplitBill={handleSplitBill}
-      />
+      /> */}
+      {/* <ReviewScreen /> */}
+      <ReviewWrapper />
     </SafeAreaView>
   );
 };

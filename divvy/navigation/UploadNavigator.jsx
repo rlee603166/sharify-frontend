@@ -1,29 +1,26 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-
-import HomeScreen from "../screens/main/HomeScreen";
-import ReceiptView from "../screens/main/ReceiptView";
 import TestScreen from "../screens/main/TestScreen";
 
-const HomeStack = createNativeStackNavigator();
+const UploadStack = createNativeStackNavigator();
 
-export default function HomeNavigator() {
+export default function UploadNavigator() {
   return (
-    <HomeStack.Navigator
+    <UploadStack.Navigator
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: "white" },
       }}
     >
-      <HomeStack.Screen 
+      {/* <UploadStack.Screen 
           name="Home"
           component={HomeScreen}
-        />      
-      {/* <HomeStack.Screen 
+        />       */}
+      {/* <UploadStack.Screen 
           name="Receipt"
           component={ReceiptView}
         /> */}
 
-      {/* <HomeStack.Screen name="Test" component={TestScreen} /> */}
-    </HomeStack.Navigator>
+      <UploadStack.Screen name="Test" component={TestScreen} />
+    </UploadStack.Navigator>
   );
 }

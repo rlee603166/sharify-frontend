@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeNavigator from "./HomeNavigator";
 import AuthNavigator from "./AuthNavigator";
 import ProfileNavigator from "./ProfileNavigation";
+import UploadNavigator from "./UploadNavigator";
 
 const App = createNativeStackNavigator();
 
@@ -16,8 +17,9 @@ export default function AppNavigation() {
           headerShown: false,
         }}
       >
-        <App.Screen name="Profile" component={ProfileNavigator} />
+        {/* <App.Screen name="Profile" component={ProfileNavigator} /> */}
         {/* <App.Screen name="Home" component={HomeNavigator} /> */}
+        <App.Screen name="Upload" component={UploadNavigator} />
         {/* <App.Screen name="Auth" component={AuthNavigator} /> */}
       </App.Navigator>
     </NavigationContainer>

@@ -35,13 +35,14 @@ const PeopleToggleButton = ({ name, isSelected, onToggle }) => (
   </TouchableOpacity>
 );
 
-const ReceiptItemView = ({ 
-  group, 
-  item, 
+const ReceiptItemView = ({
+  group,
+  item,
   onUpdateItem,
   disabled,
-  setDisabled
- }) => {
+  setDisabled,
+  isEditMode,
+}) => {
   const [priceInput, setPriceInput] = useState(item.price.toString());
   const [nameInput, setNameInput] = useState(item.name);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -55,44 +56,48 @@ const ReceiptItemView = ({
   const maxHeight = 250;
 
   useEffect(() => {
-    if (disabled) {
+    if (disabled || isEditMode) {
       setIsEditingName(false);
       setIsEditingPrice(false);
       setDisabled(false);
     }
-  }, [disabled])
+  }, [disabled]);
+
+  useEffect(() => {
+    setPriceInput(item.price.toFixed(2));
+  }, [item.price]);
 
   const getNumericPrice = (price) => {
-    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    return isNaN(numPrice) ? 0 : numPrice;
+    const numPrice = typeof price === "string" ? parseFloat(price) : price;
+    return isNaN(numPrice) ? 0 : Number(numPrice.toFixed(2));
   };
 
-  // Handle the price input change separately from the update
   const handlePriceInputChange = (text) => {
-    // Allow decimal points and numbers
-    if (text === '' || text === '.' || /^\d*\.?\d*$/.test(text)) {
+    // Allow up to 2 decimal places
+    if (text === "" || text === "." || /^\d*\.?\d{0,2}$/.test(text)) {
       setPriceInput(text);
     }
   };
 
-  // Only update the actual price when input is complete
-  const handlePriceInputComplete = () => {
-    const numericPrice = getNumericPrice(priceInput);
-    if (!isNaN(numericPrice)) {
-      onUpdateItem(item.id, {
-        ...item,
-        price: numericPrice
-      });
-    }
+  const handlePriceSubmit = () => {
+    let numericPrice = getNumericPrice(priceInput);
+    onUpdateItem(item.id, {
+      ...item,
+      price: numericPrice,
+    });
+    setPriceInput(numericPrice.toFixed(2));
     setIsEditingPrice(false);
   };
 
   const toggleExpand = () => {
+    if (isEditMode) return;
+
     if (isEditingName || isEditingPrice) {
+      handlePriceSubmit();
       setIsEditingName(false);
-      setIsEditingPrice(false);
       return;
     }
+
     const toValue = isExpanded ? 0 : 1;
 
     Animated.parallel([
@@ -136,129 +141,120 @@ const ReceiptItemView = ({
       newSelectedPeople.add(personName);
     }
     setSelectedPeople(newSelectedPeople);
-
     onUpdateItem(item.id, {
       ...item,
-      people: Array.from(newSelectedPeople).map((name) => ({ name })),
+      people: Array.from(newSelectedPeople),
     });
+    // console.log(item)
   };
 
   const calculateAmountPerPerson = () => {
     const numericPrice = getNumericPrice(item.price);
-    return selectedPeople.size > 0 
-      ? (numericPrice / selectedPeople.size)
+    return selectedPeople.size > 0
+      ? numericPrice / selectedPeople.size
       : numericPrice;
   };
 
   const amountPerPerson = calculateAmountPerPerson();
 
   return (
-    <TouchableWithoutFeedback
-      onPress={() => {
-        if (isEditingPrice || isEditingName) {
-          setIsEditingPrice(false);
-          setIsEditingName(false);
-        }
-      }}
-    >
-      <View style={styles.container}>
-        <TouchableOpacity onPress={toggleExpand} style={styles.header}>
-          <View style={styles.headerContent}>
-            <View style={styles.itemInfo}>
-              <View style={styles.nameContainer}>
-                {isEditingName ? (
-                  <TextInput
-                    style={[styles.input, styles.nameInput]}
-                    value={item.name}
-                    onChangeText={updateName}
-                    onBlur={() => setIsEditingName(false)}
-                    autoFocus
-                  />
-                ) : (
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      setIsEditingName(true);
-                    }}
-                    style={styles.nameWrapper}
-                  >
-                    <Text style={styles.itemName}>{item.name}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <View style={styles.peopleCount}>
-                <Ionicons name="people" size={16} color="#666" />
-                <Text style={styles.peopleCountText}>
-                  People: {selectedPeople.size}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.priceContainer}>
-              {isEditingPrice ? (
+    <View style={styles.container}>
+      <TouchableOpacity onPress={toggleExpand} style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.itemInfo}>
+            <View style={styles.nameContainer}>
+              {isEditingName ? (
                 <TextInput
-                  style={[styles.input, styles.priceInput]}
-                  value={priceInput}
-                  onChangeText={handlePriceInputChange}
-                  onBlur={handlePriceInputComplete}
-                  keyboardType="decimal-pad"
+                  style={[styles.input, styles.nameInput]}
+                  value={nameInput}
+                  onChangeText={updateName}
+                  onBlur={() => setIsEditingName(false)}
                   autoFocus
                 />
               ) : (
                 <TouchableOpacity
                   onPress={(e) => {
                     e.stopPropagation();
-                    setIsEditingPrice(true);
+                    setIsEditingName(true);
                   }}
+                  style={styles.nameWrapper}
                 >
-                  <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+                  <Text style={styles.itemName}>{item.name}</Text>
                 </TouchableOpacity>
               )}
-
-              <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-                <Ionicons name="chevron-up" size={16} color="#666" />
-              </Animated.View>
             </View>
-          </View>
-        </TouchableOpacity>
 
-        <Animated.View style={[styles.expandedContent, { maxHeight: height }]}>
-          <View style={styles.peopleSelector}>
-            <Text style={styles.sectionTitle}>Split with</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.peopleScrollView}
-            >
-              {group.members.map((person) => (
-                <PeopleToggleButton
-                  key={person.name}
-                  name={person.name}
-                  isSelected={selectedPeople.has(person.name)}
-                  onToggle={() => togglePerson(person.name)}
-                />
-              ))}
-            </ScrollView>
-          </View>
-
-          <View style={styles.amountSection}>
-            <View style={styles.amountHeader}>
-              <Text style={styles.amountTitle}>Amount per person</Text>
-              <Text style={styles.peopleCount}>
-                {selectedPeople.size} people
-              </Text>
-            </View>
-            <View style={styles.amountRow}>
-              <Text style={styles.amountLabel}>Each pays</Text>
-              <Text style={styles.amountPerPerson}>
-                ${amountPerPerson.toFixed(2)}
+            <View style={styles.peopleCount}>
+              <Ionicons name="people" size={16} color="#666" />
+              <Text style={styles.peopleCountText}>
+                People: {selectedPeople.size}
               </Text>
             </View>
           </View>
-        </Animated.View>
-      </View>
-    </TouchableWithoutFeedback>
+
+          <View style={styles.priceContainer}>
+            {isEditingPrice ? (
+              <TextInput
+                style={[styles.input, styles.priceInput]}
+                value={priceInput}
+                onChangeText={handlePriceInputChange}
+                onSubmitEditing={handlePriceSubmit}
+                onBlur={handlePriceSubmit}
+                keyboardType="decimal-pad"
+                autoFocus
+                selectTextOnFocus={true}
+              />
+            ) : (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setIsEditingPrice(true);
+                }}
+              >
+                <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+              </TouchableOpacity>
+            )}
+
+            <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+              <Ionicons name="chevron-up" size={16} color="#666" />
+            </Animated.View>
+          </View>
+        </View>
+      </TouchableOpacity>
+
+      <Animated.View style={[styles.expandedContent, { maxHeight: height }]}>
+        <View style={styles.peopleSelector}>
+          <Text style={styles.sectionTitle}>Split with</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.peopleScrollView}
+          >
+            {group.members.map((person) => (
+              <PeopleToggleButton
+                key={person.name}
+                name={person.name}
+                isSelected={selectedPeople.has(person.name)}
+                onToggle={() => togglePerson(person.name)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.amountSection}>
+          <View style={styles.amountHeader}>
+            <Text style={styles.amountTitle}>Amount per person</Text>
+            <Text style={styles.peopleCount}>{selectedPeople.size} people</Text>
+          </View>
+          <View style={styles.amountRow}>
+            <Text style={styles.amountLabel}>Each pays</Text>
+            <Text style={styles.amountPerPerson}>
+              ${amountPerPerson.toFixed(2)}
+            </Text>
+          </View>
+        </View>
+      </Animated.View>
+    </View>
   );
 };
 
