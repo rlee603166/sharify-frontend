@@ -1,103 +1,90 @@
-import React, { useState } from "react";
-import { 
-    View, 
-    Text, 
-    StyleSheet, 
-    TouchableOpacity, 
-    SafeAreaView, 
-    StatusBar, 
-    Platform 
+import React, { useState, useRef, forwardRef } from "react";
+import {
+    View,
+    Animated,
+    Dimensions,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    SafeAreaView,
+    StatusBar,
 } from "react-native";
 import UsernameInput from "../../components/auth/UsernameInput";
 import SMSVerificationView from "../../components/auth/SMSVerificationView";
+
 import { useUser } from "../../UserProvider";
+import theme from "../../theme/index.js";
 
 const LoginScreen = ({ navigation }) => {
-    const { requestVerificationCode, login } = useUser();
+    const [user, setUser] = useState({});
     const [step, setStep] = useState(0);
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [user, setUser] = useState({
-        username: '',
-        phone: '',
-    })
+    const prompt = "Enter your username:"
 
-    const Header = () => (
-        <SafeAreaView style={styles.header}>
-            <TouchableOpacity
-                onPress={() => navigation.goBack()}
-                style={styles.closeButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-                <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-        </SafeAreaView>
-    );
+    const { requestVerificationCode, login } = useUser();
 
-    const handleUsernameSubmit = async (username) => {
+    const handleUsername = async username => {
         try {
             const data = await requestVerificationCode(username);
-            
-            if (!data || data.status === "failed") {
-                console.error("Failed to verify username:", data);
-                return;
-            }
-    
-            await new Promise(resolve => {
-                setUser(prev => {
-                    resolve();
-                    return {
-                        ...prev,
-                        username,
-                        phone: data.phone_number
-                    };
-                });
+            console.log(data);
+            if (data.status !== "verification_sent") return;
+
+            setUser({
+                username: username,
+                phone: data.phone_number,
             });
-    
             setStep(1);
+        } catch {}
+    };
+
+    const handleSMS = async ( code ) => {
+        try {
+            const isLogin = await login(user.username, user.phone_number, code);
+
+
         } catch (error) {
-            console.error("Error in handleUsernameSubmit:", error);
+
         }
     };
-    const handleSMS = async (code) => {
-        console.log(user)
-        const success = await login(
-            user.username,
-            user.phone,
-            code
-        )
 
-        if (success) return
-    }
+    const handleBack = () => {
+        if (step === 0) {
+            navigation.pop();
+        } else {
+            setStep(step - 1);
+        }
+    };
 
-    const renderStep = () => {
+    const render = () => {
         switch (step) {
             case 0:
-                return (
-                    <UsernameInput
-                        onSubmit={handleUsernameSubmit}
-                    />
-                );
+                return <UsernameInput onSubmit={handleUsername} prompt={prompt} />;
             case 1:
-                return (
-                    <SMSVerificationView
-                        phone={user.phone}
-                        onNext={handleSMS}
-                    />
-                );
+                return <SMSVerificationView phone={user.phone} onNext={handleSMS} />;
             default:
-                return null;
+                return;
         }
     };
 
     return (
         <View style={styles.root}>
-            <StatusBar barStyle="dark-content" backgroundColor="white" />
-            <View style={styles.container}>
-                <Header />
-                <View style={styles.content}>
-                    {renderStep()}
+            <Header handleBack={handleBack} step={step} />
+            {render()}
+        </View>
+    );
+};
+
+export const Header = ({ handleBack, step }) => {
+    return (
+        <View style={styles.header}>
+            <TouchableOpacity onPress={handleBack}>
+                <View style={styles.headerButton}>
+                    {step ? (
+                        <Text style={styles.closeButtonText}>Back</Text>
+                    ) : (
+                        <Text style={styles.closeButton}>x</Text>
+                    )}
                 </View>
-            </View>
+            </TouchableOpacity>
         </View>
     );
 };
@@ -105,27 +92,37 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     root: {
         flex: 1,
-        backgroundColor: 'white',
-    },
-    container: {
-        flex: 1,
-        backgroundColor: 'white',
-    },
-    content: {
-        flex: 1,
-        backgroundColor: 'white',
+        backgroundColor: "white",
     },
     header: {
-        backgroundColor: 'white',
+        backgroundColor: "white",
+    },
+    headerContainer: {
+        backgroundColor: "white",
+    },
+    headerButton: {
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        alignSelf: "flex-start",
+    },
+    headerButtonText: {
+        fontSize: 24,
+        color: theme.colors.primary,
+        lineHeight: 22,
     },
     closeButton: {
-        padding: 16,
-        alignSelf: 'flex-end',
+        fontSize: 24,
+        color: "#666",
+        lineHeight: 24,
     },
     closeButtonText: {
-        fontSize: 24,
-        color: '#666',
+        fontSize: 18,
+        color: theme.colors.primary,
         lineHeight: 24,
+    },
+    slideContainer: {
+        flex: 1,
+        overflow: "hidden",
     },
 });
 

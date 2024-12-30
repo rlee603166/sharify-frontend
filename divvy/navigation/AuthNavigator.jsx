@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
+import SignUpScreen from '../screens/auth/SignUpScreen';
 
 const AuthStack = createNativeStackNavigator();
 
@@ -27,6 +28,15 @@ export default function AuthNavigator() {
             animation: 'slide_from_bottom',
           }}
         />
+        <AuthStack.Screen 
+          name="Sign" 
+          component={SignUpScreen}
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+          }}
+        />
+ 
       </AuthStack.Navigator>
     );
   }

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,59 +9,11 @@ import {
   SafeAreaView,
   Dimensions,
   Animated,
+  Platform,
+  StatusBar,
+  Easing,
 } from "react-native";
 import theme from "../../theme";
-
-const mockData = {
-  John: {
-    name: "John",
-    items: [
-      {
-        name: "Caesar Salad",
-        price: 15,
-        users: 1,
-      },
-      {
-        name: "Glass of Wine",
-        price: 12.5,
-        users: 3,
-      },
-    ],
-    subtotal: 19.17,
-  },
-  Alice: {
-    name: "Alice",
-    items: [
-      {
-        name: "Pasta Carbonara",
-        price: 22.5,
-        users: 1,
-      },
-      {
-        name: "Glass of Wine",
-        price: 12.5,
-        users: 3,
-      },
-    ],
-    subtotal: 26.67,
-  },
-  Bob: {
-    name: "Bob",
-    items: [
-      {
-        name: "Grilled Salmon",
-        price: 32,
-        users: 1,
-      },
-      {
-        name: "Glass of Wine",
-        price: 12.5,
-        users: 3,
-      },
-    ],
-    subtotal: 36.17,
-  },
-};
 
 const calculateTotals = (data) => {
   const subtotal = Object.values(data).reduce(
@@ -74,17 +26,94 @@ const calculateTotals = (data) => {
   return { subtotal, tax, tip, total };
 };
 
-const ReviewScreen = () => {
+const AnimatedSwipeText = ({ isDragging, style }) => {
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: isDragging ? 0 : 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [isDragging]);
+
+  return (
+    <Animated.Text style={[styles.swipeText, style, { opacity }]}>
+      Swipe up to Submit
+    </Animated.Text>
+  );
+};
+
+const ReviewScreen = ({ isDragging, processed }) => {
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const slideAnim = useRef(
-    new Animated.Value(Dimensions.get("window").height)
-  ).current;
+  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState({});
+  const [totals, setTotals] = useState({
+    subtotal: 0,
+    tax: 0,
+    tip: 0,
+    total: 0
+  });
+
+  const slideAnim = useRef(new Animated.Value(Dimensions.get("window").height)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const totals = calculateTotals(mockData);
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const startBounceAnimation = () => {
+      Animated.sequence([
+        Animated.delay(2000),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(bounceAnim, {
+              toValue: -10,
+              duration: 350,
+              useNativeDriver: true,
+              easing: Easing.out(Easing.cubic),
+            }),
+            Animated.timing(bounceAnim, {
+              toValue: 0,
+              duration: 350,
+              useNativeDriver: true,
+              easing: Easing.in(Easing.cubic),
+            }),
+            Animated.timing(bounceAnim, {
+              toValue: -10,
+              duration: 350,
+              useNativeDriver: true,
+              easing: Easing.out(Easing.cubic),
+            }),
+            Animated.timing(bounceAnim, {
+              toValue: 0,
+              duration: 350,
+              useNativeDriver: true,
+              easing: Easing.in(Easing.cubic),
+            }),
+            Animated.delay(2000),
+          ])
+        ),
+      ]).start();
+    };
+
+    startBounceAnimation();
+  }, []);
+
+  useEffect(() => {
+    if (processed && Object.keys(processed).length > 0) {
+      setData(processed);
+      const calculatedTotals = calculateTotals(processed);
+      setTotals(calculatedTotals);
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+    }
+  }, [processed]);
 
   const handlePersonPress = (name) => {
-    setSelectedPerson(mockData[name]);
+    if (!data[name]) return;
+    
+    setSelectedPerson(data[name]);
     setModalVisible(true);
     Animated.parallel([
       Animated.timing(slideAnim, {
@@ -118,167 +147,201 @@ const ReviewScreen = () => {
     });
   };
 
+    if (!isLoading) {
+        return (
+            <View style={styles.loadingContainer}>
+            <Text>Loading...</Text>
+            </View>  // Fixed closing tag
+        );
+    }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Receipt Review</Text>
+    <View style={styles.rootContainer}>
+      <View style={styles.container}>
+        <View style={styles.spacer} />
+        <Text style={styles.title}>Receipt Review</Text>
 
-      <View style={styles.contentContainer}>
-        <Text style={styles.sectionTitle}>Individual Shares</Text>
-        <ScrollView style={styles.scrollView}>
-          <View style={styles.section}>
-            {Object.keys(mockData).map((name) => (
-              <TouchableOpacity
-                key={name}
-                style={styles.shareCard}
-                onPress={() => handlePersonPress(name)}
-              >
-                <Text style={styles.personName}>{name}</Text>
-                <Text style={styles.amount}>
-                  ${mockData[name].subtotal.toFixed(2)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-
-        <View style={styles.summaryContainer}>
-          <View style={[styles.section, styles.summarySection]}>
-            <Text style={styles.sectionTitle}>Summary</Text>
-            <View style={styles.summaryContent}>
-              <View style={styles.summaryRow}>
-                <Text>Subtotal</Text>
-                <Text>${totals.subtotal.toFixed(2)}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text>Tax (8%)</Text>
-                <Text>${totals.tax.toFixed(2)}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text>Tip (18%)</Text>
-                <Text>${totals.tip.toFixed(2)}</Text>
-              </View>
-              <View style={[styles.summaryRow, styles.totalRow]}>
-                <Text style={styles.boldText}>Total</Text>
-                <Text style={styles.boldText}>${totals.total.toFixed(2)}</Text>
-              </View>
+        <View style={styles.contentContainer}>
+          <Text style={styles.sectionTitleShares}>Individual Shares</Text>
+          <ScrollView style={styles.scrollView}>
+            <View style={styles.section}>
+              {Object.keys(data).map((name) => (
+                <TouchableOpacity
+                  key={name}
+                  style={styles.shareCard}
+                  onPress={() => handlePersonPress(name)}
+                >
+                  <Text style={styles.personName}>{name}</Text>
+                  <Text style={styles.amount}>
+                    ${data[name].subtotal.toFixed(2)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <View style={styles.dragHandle}>
-              <Text style={styles.chevron}>︿</Text>
+          </ScrollView>
+
+          <View style={styles.summaryContainer}>
+            <View style={[styles.section, styles.summarySection]}>
+              <Text style={styles.sectionTitle}>Summary</Text>
+              <View style={styles.summaryContent}>
+                <View style={styles.summaryRow}>
+                  <Text>Subtotal</Text>
+                  <Text>${totals.subtotal.toFixed(2)}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text>Tax (8%)</Text>
+                  <Text>${totals.tax.toFixed(2)}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text>Tip (18%)</Text>
+                  <Text>${totals.tip.toFixed(2)}</Text>
+                </View>
+                <View style={[styles.summaryRow, styles.totalRow]}>
+                  <Text style={styles.boldText}>Total</Text>
+                  <Text style={styles.boldText}>
+                    ${totals.total.toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.dragHandle}>
+                <Animated.Text
+                  style={[
+                    styles.chevron,
+                    {
+                      transform: [{ translateY: bounceAnim }],
+                    },
+                  ]}
+                >
+                  ︿
+                </Animated.Text>
+                <AnimatedSwipeText 
+                  isDragging={isDragging}
+                  style={styles.swipeText}
+                />
+              </View>
             </View>
           </View>
         </View>
-      </View>
 
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={handleCloseModal}
-        animationType="none"
-      >
-        {selectedPerson && (
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.modalContainer}
-            onPress={handleCloseModal}
-          >
-            <Animated.View
-              style={[
-                styles.modalOverlay,
-                {
-                  opacity: fadeAnim,
-                },
-              ]}
-            />
-
-            <Animated.View
-              style={[
-                styles.modalContent,
-                {
-                  transform: [{ translateY: slideAnim }],
-                },
-              ]}
+        <Modal
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={handleCloseModal}
+          animationType="none"
+        >
+          {selectedPerson && (
+            <TouchableOpacity
+              activeOpacity={1}
+              style={styles.modalContainer}
+              onPress={handleCloseModal}
             >
-              <TouchableOpacity
-                activeOpacity={1}
-                onPress={(e) => e.stopPropagation()}
-                style={{ flex: 1 }}
+              <Animated.View
+                style={[
+                  styles.modalOverlay,
+                  {
+                    opacity: fadeAnim,
+                  },
+                ]}
+              />
+
+              <Animated.View
+                style={[
+                  styles.modalContent,
+                  {
+                    transform: [{ translateY: slideAnim }],
+                  },
+                ]}
               >
-                <View style={styles.modalHeader}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {selectedPerson.name[0]}
-                    </Text>
-                  </View>
-                  <View style={styles.headerTextContainer}>
-                    <Text style={styles.headerTitle}>
-                      {selectedPerson.name}'s Share
-                    </Text>
-                    <Text style={styles.headerSubtitle}>Order Details</Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={handleCloseModal}
-                    style={styles.closeButton}
-                  >
-                    <Text style={styles.closeButtonText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <ScrollView style={styles.modalScroll}>
-                  <View style={styles.itemsContainer}>
-                    {selectedPerson.items.map((item, index) => (
-                      <View key={index} style={styles.itemRow}>
-                        <View>
-                          <Text style={styles.itemName}>{item.name}</Text>
-                          {item.users > 1 && (
-                            <Text style={styles.splitText}>
-                              Split {item.users} ways
-                            </Text>
-                          )}
-                        </View>
-                        <Text style={styles.itemPrice}>
-                          ${(item.price / item.users).toFixed(2)}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-
-                  <View style={styles.totalContainer}>
-                    <View style={styles.totalRow}>
-                      <Text style={styles.totalLabel}>Subtotal</Text>
-                      <Text style={styles.totalAmount}>
-                        ${selectedPerson.subtotal.toFixed(2)}
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={(e) => e.stopPropagation()}
+                  style={{ flex: 1 }}
+                >
+                  <View style={styles.modalHeader}>
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>
+                        {selectedPerson.name[0]}
                       </Text>
                     </View>
+                    <View style={styles.headerTextContainer}>
+                      <Text style={styles.headerTitle}>
+                        {selectedPerson.name}'s Share
+                      </Text>
+                      <Text style={styles.headerSubtitle}>Order Details</Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={handleCloseModal}
+                      style={styles.closeButton}
+                    >
+                      <Text style={styles.closeButtonText}>✕</Text>
+                    </TouchableOpacity>
                   </View>
-                </ScrollView>
 
-                <TouchableOpacity
-                  style={styles.doneButton}
-                  onPress={handleCloseModal}
-                >
-                  <Text style={styles.doneButtonText}>Done</Text>
+                  <ScrollView style={styles.modalScroll}>
+                    <View style={styles.itemsContainer}>
+                      {selectedPerson.items.map((item, index) => (
+                        <View key={index} style={styles.itemRow}>
+                          <View>
+                            <Text style={styles.itemName}>{item.name}</Text>
+                            {item.users > 1 && (
+                              <Text style={styles.splitText}>
+                                Split {item.users} ways
+                              </Text>
+                            )}
+                          </View>
+                          <Text style={styles.itemPrice}>
+                            ${(item.price / item.users).toFixed(2)}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    <View style={styles.totalContainer}>
+                      <View style={styles.totalRow}>
+                        <Text style={styles.totalLabel}>Subtotal</Text>
+                        <Text style={styles.totalAmount}>
+                          ${selectedPerson.subtotal.toFixed(2)}
+                        </Text>
+                      </View>
+                    </View>
+                  </ScrollView>
+
+                  <TouchableOpacity
+                    style={styles.doneButton}
+                    onPress={handleCloseModal}
+                  >
+                    <Text style={styles.doneButtonText}>Done</Text>
+                  </TouchableOpacity>
                 </TouchableOpacity>
-              </TouchableOpacity>
-            </Animated.View>
-          </TouchableOpacity>
-        )}
-      </Modal>
-    </SafeAreaView>
+              </Animated.View>
+            </TouchableOpacity>
+          )}
+        </Modal>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rootContainer: {
+    flex: 1,
+    backgroundColor: "#1976d2",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-    height: '100%',
+  },
+  spacer: {
+    height: Platform.OS === "ios" ? 44 : StatusBar.currentHeight,
   },
   contentContainer: {
     flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: "#f5f5f5",
-    height: '100%',
+    paddingTop: 0,
   },
   scrollView: {
     flex: 1,
@@ -287,20 +350,56 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     padding: 16,
+    paddingVertical: 12,
   },
   section: {
-    marginBottom: 20,
     paddingHorizontal: 16,
+  },
+  dragHandle: {
+    alignItems: "center",
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  chevron: {
+    fontSize: 24,
+    color: "#666",
+    height: 24,
+    lineHeight: 24,
+  },
+  swipeText: {
+    alignSelf: "center",
+    color: "#666",
+    fontSize: 14,
+    fontWeight: "300",
+  },
+  summaryContainer: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 12,
   },
+  sectionTitleShares: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
   shareCard: {
     backgroundColor: "white",
     borderRadius: 12,
-    padding: 16,
+    padding: 14,
     marginBottom: 8,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -320,35 +419,23 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontSize: 16,
-  },
-  summaryContainer: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 5,
+    color: theme.colors.primary,
   },
   summarySection: {
     backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 16,
+    paddingTop: 20,
     marginBottom: 0,
-    paddingBottom: 0,
   },
   summaryContent: {
-    gap: 12,
+    gap: 8,
   },
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 4,
+    paddingVertical: 3,
   },
   totalRow: {
     borderTopWidth: 1,
@@ -358,17 +445,7 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontWeight: "bold",
-  },
-  dragHandle: {
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  chevron: {
-    fontSize: 24,
-    color: '#666',
-    height: 24,
-    lineHeight: 24,
+    color: theme.colors.primary,
   },
   modalContainer: {
     flex: 1,
@@ -454,11 +531,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
   },
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
   totalLabel: {
     fontSize: 16,
     fontWeight: "bold",
@@ -466,6 +538,7 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 16,
     fontWeight: "bold",
+    color: theme.colors.primary,
   },
   doneButton: {
     backgroundColor: theme.colors.primary,
@@ -478,7 +551,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
-  },
+  }
 });
 
 export default ReviewScreen;

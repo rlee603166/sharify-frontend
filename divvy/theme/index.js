@@ -4,6 +4,7 @@ export const theme = {
     background: "#FFFFFF",
     text: "#000000",
     secondary: "rgba(99, 102, 241, 0.1)",
+    smth: "rgba(99, 102, 241, 0.5)",
     border: "rgba(128, 128, 128, 0.3)",
   },
   spacing: {

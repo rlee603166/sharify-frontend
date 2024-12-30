@@ -1,84 +1,86 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import theme from '../../theme';
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import theme from "../../theme";
 
 const WelcomeScreen = ({ navigation }) => {
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
+    const [showLogin, setShowLogin] = useState(false);
+    const [showSignup, setShowSignup] = useState(false);
 
-  return (
-    <View style={styles.container}>
-        <View style={styles.spacer} />
-      
+    return (
+        <View style={styles.container}>
+            <View style={styles.spacer} />
+
             <View style={styles.contentContainer}>
                 <Text style={styles.welcomeText}>Welcome to</Text>
                 <Text style={styles.brandText}>divvy.me</Text>
-        
+
                 <Text style={styles.descriptionText}>
-                    Easily split bills, track expenses, and settle payments with your group. 
+                    Easily split bills, track expenses, and settle payments with your group.
                     Simplify sharing and get back to what matters.
                 </Text>
             </View>
 
-        <View style={styles.flex} />
+            <View style={styles.flex} />
 
-        <View style={styles.dotsContainer}>
-            {[...Array(4)].map((_, index) => (
-                <View
-                    key={index}
-                    style={[
-                        styles.dot,
-                        { backgroundColor: index === 0 ? theme.colors.primary : '#D1D1D6' }
-                    ]}
-                />
-            ))}
+            <View style={styles.dotsContainer}>
+                {[...Array(4)].map((_, index) => (
+                    <View
+                        key={index}
+                        style={[
+                            styles.dot,
+                            {
+                                backgroundColor: index === 0 ? theme.colors.primary : "#D1D1D6",
+                            },
+                        ]}
+                    />
+                ))}
+            </View>
+
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                    style={styles.loginButton}
+                    onPress={() => navigation.navigate("Auth", { screen: "Login" })}
+                >
+                    <Text style={styles.loginText}>Log in</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.signupButton}
+                    onPress={() => navigation.navigate("Auth", { screen: "Sign" })}
+                >
+                    <Text style={styles.signupText}>Sign up</Text>
+                </TouchableOpacity>
+            </View>
         </View>
-
-        <View style={styles.buttonContainer}>
-            <TouchableOpacity
-                style={styles.loginButton}
-                onPress={() => navigation.navigate('Auth', { screen: 'Login' })}
-            >
-            <Text style={styles.loginText}>Log in</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                style={styles.signupButton}
-                onPress={() => navigation.navigate('Auth', { screen: 'Signup' })}
-            >
-            <Text style={styles.signupText}>Sign up</Text>
-            </TouchableOpacity>
-        </View>
-    </View>
-  );
+    );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'white',
+        backgroundColor: "white",
     },
     spacer: {
         height: 80,
     },
     contentContainer: {
-        alignItems: 'center',
+        alignItems: "center",
         gap: 16,
     },
     welcomeText: {
         fontSize: 28,
-        fontWeight: '600',
-        color: '#000',
+        fontWeight: "600",
+        color: "#000",
     },
     brandText: {
         fontSize: 34,
-        fontWeight: '700',
+        fontWeight: "700",
         color: theme.colors.primary,
     },
     descriptionText: {
         fontSize: 16,
-        color: '#666',
-        textAlign: 'center',
+        color: "#666",
+        textAlign: "center",
         lineHeight: 22,
         paddingHorizontal: 20,
     },
@@ -86,9 +88,9 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     dotsContainer: {
-        flexDirection: 'row',
+        flexDirection: "row",
         gap: 8,
-        justifyContent: 'center',
+        justifyContent: "center",
         marginBottom: 24,
     },
     dot: {
@@ -97,7 +99,7 @@ const styles = StyleSheet.create({
         borderRadius: 4,
     },
     buttonContainer: {
-        flexDirection: 'row',
+        flexDirection: "row",
         gap: 12,
         paddingHorizontal: 24,
         paddingBottom: 32,
@@ -107,27 +109,27 @@ const styles = StyleSheet.create({
         height: 48,
         borderRadius: 24,
         borderWidth: 1,
-        borderColor: 'rgba(128, 128, 128, 0.3)',
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderColor: "rgba(128, 128, 128, 0.3)",
+        justifyContent: "center",
+        alignItems: "center",
     },
     loginText: {
         fontSize: 16,
-        fontWeight: '600',
-        color: '#000',
+        fontWeight: "600",
+        color: "#000",
     },
     signupButton: {
         flex: 1,
         height: 48,
         borderRadius: 24,
         backgroundColor: theme.colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
     },
     signupText: {
         fontSize: 16,
-        fontWeight: '600',
-        color: 'white',
+        fontWeight: "600",
+        color: "white",
     },
 });
 

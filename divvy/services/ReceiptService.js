@@ -124,17 +124,4 @@ const mockGroup = {
 const receiptService = new ReceiptService();
 const result = receiptService.processTransaction(mockTransaction, mockGroup);
 
-// Print results
-console.log("Full Results:");
-console.log(JSON.stringify(result, null, 2));
 
-// Print individual breakdowns
-Object.values(result).forEach(person => {
-    console.log(`\n${person.toString()}`);
-    console.log("Items:", person.getItems().map(item => ({
-        name: item.getName(),
-        originalPrice: item.price,
-        pricePerPerson: item.getPricePer()
-    })));
-    console.log("Subtotal:", person.subtotal);
-});

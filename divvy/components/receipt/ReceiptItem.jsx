@@ -51,8 +51,8 @@ const ReceiptItemView = ({
   const [selectedPeople, setSelectedPeople] = useState(
     new Set(item.people?.map((p) => p.name) || [])
   );
-  const [rotationAnim] = useState(new Animated.Value(0));
   const expandAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
   const maxHeight = 250;
 
   useEffect(() => {
@@ -65,7 +65,8 @@ const ReceiptItemView = ({
 
   useEffect(() => {
     setPriceInput(item.price.toFixed(2));
-  }, [item.price]);
+    setNameInput(item.name);
+  }, [item.price, item.name]);
 
   const getNumericPrice = (price) => {
     const numPrice = typeof price === "string" ? parseFloat(price) : price;
@@ -89,19 +90,33 @@ const ReceiptItemView = ({
     setIsEditingPrice(false);
   };
 
+  const handleNameInputChange = (text) => {
+    setNameInput(text);
+  };
+
+  const handleNameSubmit = () => {
+    onUpdateItem(item.id, {
+      ...item,
+      name: nameInput,
+    });
+    setIsEditingName(false);
+  };
+
   const toggleExpand = () => {
     if (isEditMode) return;
 
     if (isEditingName || isEditingPrice) {
-      handlePriceSubmit();
+      if (isEditingPrice) handlePriceSubmit();
+      if (isEditingName) handleNameSubmit();
       setIsEditingName(false);
+      setIsEditingPrice(false);
       return;
     }
 
     const toValue = isExpanded ? 0 : 1;
 
     Animated.parallel([
-      Animated.spring(rotationAnim, {
+      Animated.spring(rotateAnim, {
         toValue,
         useNativeDriver: true,
         friction: 8,
@@ -116,22 +131,15 @@ const ReceiptItemView = ({
     setIsExpanded(!isExpanded);
   };
 
-  const rotation = rotationAnim.interpolate({
+  const rotateInterpolate = rotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ["0deg", "180deg"],
+    outputRange: ['0deg', '180deg']
   });
 
-  const height = expandAnim.interpolate({
+  const heightInterpolate = expandAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, maxHeight],
+    outputRange: [0, maxHeight]
   });
-
-  const updateName = (newName) => {
-    onUpdateItem(item.id, {
-      ...item,
-      name: newName,
-    });
-  };
 
   const togglePerson = (personName) => {
     const newSelectedPeople = new Set(selectedPeople);
@@ -145,7 +153,6 @@ const ReceiptItemView = ({
       ...item,
       people: Array.from(newSelectedPeople),
     });
-    // console.log(item)
   };
 
   const calculateAmountPerPerson = () => {
@@ -167,8 +174,9 @@ const ReceiptItemView = ({
                 <TextInput
                   style={[styles.input, styles.nameInput]}
                   value={nameInput}
-                  onChangeText={updateName}
-                  onBlur={() => setIsEditingName(false)}
+                  onChangeText={handleNameInputChange}
+                  onSubmitEditing={handleNameSubmit}
+                  onBlur={handleNameSubmit}
                   autoFocus
                 />
               ) : (
@@ -215,14 +223,14 @@ const ReceiptItemView = ({
               </TouchableOpacity>
             )}
 
-            <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+            <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
               <Ionicons name="chevron-up" size={16} color="#666" />
             </Animated.View>
           </View>
         </View>
       </TouchableOpacity>
 
-      <Animated.View style={[styles.expandedContent, { maxHeight: height }]}>
+      <Animated.View style={[styles.expandedContent, { maxHeight: heightInterpolate }]}>
         <View style={styles.peopleSelector}>
           <Text style={styles.sectionTitle}>Split with</Text>
           <ScrollView
@@ -257,6 +265,8 @@ const ReceiptItemView = ({
     </View>
   );
 };
+
+export default ReceiptItemView;
 
 const styles = StyleSheet.create({
   container: {
@@ -393,5 +403,3 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
 });
-
-export default ReceiptItemView;

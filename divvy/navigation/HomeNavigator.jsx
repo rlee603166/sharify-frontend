@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import HomeScreen from "../screens/main/HomeScreen";
-import ReceiptView from "../screens/main/ReceiptView";
-import TestScreen from "../screens/main/TestScreen";
+import HomeScreen from "../screens/upload/HomeScreen";
+import ReceiptView from "../screens/upload/ReceiptView";
+import TestScreen from "../screens/upload/TestScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -15,7 +15,7 @@ export default function HomeNavigator() {
       }}
     >
       <HomeStack.Screen 
-          name="Home"
+          name="HomeScreen"
           component={HomeScreen}
         />      
       {/* <HomeStack.Screen 

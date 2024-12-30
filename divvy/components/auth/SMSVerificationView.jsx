@@ -18,14 +18,12 @@ const SMSVerificationView = ({ phone, onNext, initialCode = '' }) => {
     const inputRef = useRef(null);
 
     useEffect(() => {
-        // Auto-focus the input when component mounts
         setTimeout(() => {
             inputRef.current?.focus();
         }, 100);
     }, []);
 
     const handleCodeChange = (text) => {
-        // Filter non-numeric characters and limit to 6 digits
         const numericCode = text.replace(/[^0-9]/g, '').slice(0, 6);
         setCode(numericCode);
     };
@@ -83,6 +81,7 @@ const SMSVerificationView = ({ phone, onNext, initialCode = '' }) => {
                     ref={inputRef}
                     style={styles.input}
                     value={code}
+                    placeholder="012345"
                     onChangeText={handleCodeChange}
                     keyboardType="number-pad"
                     maxLength={6}
@@ -132,9 +131,7 @@ const styles = StyleSheet.create({
     input: {
         fontSize: 24,
         fontWeight: '600',
-        padding: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#CCCCCC',
+        paddingVertical: 12,
     },
     errorText: {
         color: 'red',
@@ -144,26 +141,25 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     buttonContainer: {
-        marginTop: 'auto',
-        paddingHorizontal: 10,
-        paddingBottom: 32,
+        paddingHorizontal: 0,
+        paddingBottom: 80
     },
     button: {
         height: 48,
         borderRadius: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
     },
     buttonEnabled: {
         backgroundColor: theme.colors.primary,
     },
     buttonDisabled: {
-        backgroundColor: '#666',
+        backgroundColor: "#666",
     },
     buttonText: {
-        color: 'white',
+        color: "white",
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: "600",
     },
 });
 

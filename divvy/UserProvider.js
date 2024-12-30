@@ -1,19 +1,19 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { createContext, useContext, useEffect, useState } from "react";
 
 const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
-    const apiURL = "http://127.0.0.1:8000/api/v1";
-    
+    const apiURL = "http://localhost:8000/api/v1";
+
     const [state, setState] = useState({
         accessToken: null,
         username: null,
         phone: null,
         isAuthenticated: false,
         isLoading: true,
-        error: null
+        error: null,
     });
 
     useEffect(() => {
@@ -22,32 +22,32 @@ export const UserProvider = ({ children }) => {
 
     const loadStoredUsername = async () => {
         try {
-            return await SecureStore.getItemAsync('username');
+            return await SecureStore.getItemAsync("username");
         } catch (error) {
-            console.error('Failed to load stored username:', error);
+            console.error("Failed to load stored username:", error);
             return null;
         }
     };
 
-    const saveUsername = async (username) => {
+    const saveUsername = async username => {
         try {
-            await SecureStore.setItemAsync('username', username);
+            await SecureStore.setItemAsync("username", username);
         } catch (error) {
-            console.error('Failed to save username:', error);
+            console.error("Failed to save username:", error);
         }
     };
 
     const checkAuthState = async () => {
         try {
-            const accessToken = await SecureStore.getItemAsync('access_token');
-            const refreshToken = await SecureStore.getItemAsync('refresh_token');
+            const accessToken = await SecureStore.getItemAsync("access_token");
+            const refreshToken = await SecureStore.getItemAsync("refresh_token");
             const username = await loadStoredUsername();
 
             if (!accessToken || !refreshToken) {
-                setState(prev => ({ 
-                    ...prev, 
+                setState(prev => ({
+                    ...prev,
                     username,
-                    isLoading: false 
+                    isLoading: false,
                 }));
                 return;
             }
@@ -67,21 +67,21 @@ export const UserProvider = ({ children }) => {
                 await logout();
             }
         } catch (error) {
-            console.error('Auth state check failed:', error);
-            setState(prev => ({ 
-                ...prev, 
+            console.error("Auth state check failed:", error);
+            setState(prev => ({
+                ...prev,
                 isLoading: false,
-                error: 'Authentication check failed'
+                error: "Authentication check failed",
             }));
         }
     };
 
-    const loadUserData = async (token) => {
+    const loadUserData = async ( token ) => {
         try {
             const response = await fetch(`${apiURL}/users/me`, {
-                headers: { 
-                    Authorization: `Bearer ${token}`
-                }
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             if (response.ok) {
@@ -93,18 +93,18 @@ export const UserProvider = ({ children }) => {
                     accessToken: token,
                     isAuthenticated: true,
                     isLoading: false,
-                    error: null
+                    error: null,
                 }));
             }
         } catch (error) {
-            console.error('Loading user data failed:', error);
+            console.error("Loading user data failed:", error);
         }
     };
 
-    const validateAccessToken = async (token) => {
+    const validateAccessToken = async ( token ) => {
         try {
             const response = await fetch(`${apiURL}/auth/validate-access`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             return response.ok;
         } catch (error) {
@@ -112,14 +112,14 @@ export const UserProvider = ({ children }) => {
         }
     };
 
-    const refreshAccessToken = async (refreshToken) => {
+    const refreshAccessToken = async ( refreshToken ) => {
         try {
             const response = await fetch(`${apiURL}/auth/refresh`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
                     Authorization: `Bearer ${refreshToken}`,
-                    'Content-Type': 'application/json'
-                }
+                    "Content-Type": "application/json",
+                },
             });
 
             if (!response.ok) {
@@ -128,12 +128,12 @@ export const UserProvider = ({ children }) => {
 
             const data = await response.json();
 
-            await SecureStore.setItemAsync('access_token', data.access_token);
-            await SecureStore.setItemAsync('refresh_token', data.refresh_token);
+            await SecureStore.setItemAsync("access_token", data.access_token);
+            await SecureStore.setItemAsync("refresh_token", data.refresh_token);
 
             return data;
         } catch (error) {
-            console.error('Token refresh failed:', error);
+            console.error("Token refresh failed:", error);
             return false;
         }
     };
@@ -141,26 +141,26 @@ export const UserProvider = ({ children }) => {
     const login = async (username, phone, code) => {
         try {
             const response = await fetch(`${apiURL}/auth/token`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
                 },
                 body: JSON.stringify({
                     username,
                     phone_number: phone,
-                    code
-                })
+                    code,
+                }),
             });
 
             if (!response.ok) {
-                throw new Error('Login failed');
-            }
+                throw new Error("Login failed");
+            }            
 
             const data = await response.json();
 
-            await SecureStore.setItemAsync('access_token', data.access_token);
-            await SecureStore.setItemAsync('refresh_token', data.refresh_token);
+            await SecureStore.setItemAsync("access_token", data.access_token);
+            await SecureStore.setItemAsync("refresh_token", data.refresh_token);
             await saveUsername(username);
 
             setState(prev => ({
@@ -169,62 +169,66 @@ export const UserProvider = ({ children }) => {
                 username,
                 phone,
                 isAuthenticated: true,
-                error: null
+                error: null,
             }));
 
             return true;
         } catch (error) {
             setState(prev => ({
                 ...prev,
-                error: 'Login failed'
+                error: "Login failed",
             }));
             return false;
         }
     };
 
-    const requestVerificationCode = async (username) => {
+    const requestVerificationCode = async ( username ) => {
         try {
             const response = await fetch(`${apiURL}/auth/request-code`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    username: username
-                })
+                    username: username,
+                }),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to send verification code');
+                throw new Error("Failed to send verification code");
             }
 
-            const data = response.json()
+            const data = response.json();
 
             return data;
         } catch (error) {
             setState(prev => ({
                 ...prev,
-                error: 'Failed to send verification code'
+                error: "Failed to send verification code",
             }));
             return false;
         }
     };
 
+    const signup = async ( phone, username, photo, ) => {
+
+    }
+
     const logout = async () => {
         try {
-            await SecureStore.deleteItemAsync('access_token');
-            await SecureStore.deleteItemAsync('refresh_token');
-            await SecureStore.deleteItemAsync('username');
+            await SecureStore.deleteItemAsync("access_token");
+            await SecureStore.deleteItemAsync("refresh_token");
+            await SecureStore.deleteItemAsync("username");
             setState({
                 accessToken: null,
                 username: null,
                 phone: null,
                 isAuthenticated: false,
                 isLoading: false,
-                error: null
+                error: null,
             });
         } catch (error) {
-            console.error('Logout failed:', error);
+            console.error("Logout failed:", error);
         }
     };
 
@@ -234,20 +238,16 @@ export const UserProvider = ({ children }) => {
         logout,
         requestVerificationCode,
         refreshAccessToken,
-        validateAccessToken
+        validateAccessToken,
     };
 
-    return (
-        <UserContext.Provider value={value}>
-            {children}
-        </UserContext.Provider>
-    );
+    return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 
 export const useUser = () => {
     const context = useContext(UserContext);
     if (!context) {
-        throw new Error('useUser must be used within a UserProvider');
+        throw new Error("useUser must be used within a UserProvider");
     }
     return context;
 };
