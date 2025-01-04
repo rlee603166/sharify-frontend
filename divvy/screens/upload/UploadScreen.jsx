@@ -1,6 +1,6 @@
 // UploadScreen.js
 import { useEffect, useState } from "react";
-import CameraScreen from "../../components/upload/CameraView";
+import CameraScreen from "../../components/upload/CameraScreen";
 import PhotoReview from "./PhotoReviewScreen";
 import { View, TextInput, Text, TouchableOpacity } from "react-native";
 import ContactList from "../../components/main/ContactList";
@@ -14,12 +14,23 @@ const UploadScreen = ({ navigation }) => {
     const [selectedPeople, setSelectedPeople] = useState();
     const [processed, setProcessed] = useState({});
     const [isLoading, setIsLoading] = useState(false);
-
+    const [inputType, setInputType] = useState(null);
+    
     const handlePictureTaken = (uri, type = "camera") => {
         if (type === "manual") {
-            setStep(3);
+            setStep(2);
+            setInputType("manual");
         } else {
+            setInputType("camera");
             setPhotoUri(uri);
+            setStep(1);
+        }
+    };
+
+    const handleBack = () => {
+        if (inputType === "manual") {
+            setStep(0);
+        } else {
             setStep(1);
         }
     };
@@ -33,17 +44,11 @@ const UploadScreen = ({ navigation }) => {
         setStep(2);
     };
 
-    const handleManualSubmit = () => {
-        if (manualInput.trim()) {
-            setStep(2);
-        }
-    };
-
-    const onSelectPeople = selectedItems => {
+    const onSelectPeople = ( selectedItems ) => {
         setSelectedPeople(selectedItems);
     };
 
-    const onProcessed = processedReceipt => {
+    const onProcessed = ( processedReceipt ) => {
         setProcessed(processedReceipt);
     };
 
@@ -61,7 +66,12 @@ const UploadScreen = ({ navigation }) => {
                 );
             case 2:
                 return (
-                    <ContactList setStep={setStep} onSelectPeople={onSelectPeople} type="Next" />
+                    <ContactList 
+                        setStep={setStep} 
+                        onSelectPeople={onSelectPeople} 
+                        type="Next" 
+                        handleBack={handleBack}
+                    />
                 );
             case 3:
                 return (
@@ -70,10 +80,16 @@ const UploadScreen = ({ navigation }) => {
                         setStep={setStep}
                         onProcessed={onProcessed}
                         selectedPeople={selectedPeople}
+                        photoUri={photoUri}
                     />
                 );
             case 4:
-                return <ReviewWrapper setStep={setStep} processedReceipt={processed} />;
+                return ( 
+                    <ReviewWrapper 
+                        setStep={setStep} 
+                        processed={processed} 
+                    />  
+                );
             default:
                 return null;
         }

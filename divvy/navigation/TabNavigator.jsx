@@ -13,7 +13,7 @@ export default function TabNavigator() {
             initialRouteName="HomeNavigator"
             screenOptions={({ route }) => ({
                 tabBarShowLabel: true,
-                tabBarActiveTintColor: theme.colors.primary, 
+                tabBarActiveTintColor: theme.colors.primary,
                 tabBarStyle: {
                     height: 90,
                     paddingBottom: 30,
@@ -48,6 +48,7 @@ export default function TabNavigator() {
                             color={theme.colors.primary}
                         />
                     ),
+
                 }}
             />
             <Tab.Screen

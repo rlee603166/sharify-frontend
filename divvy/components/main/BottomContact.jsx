@@ -40,7 +40,7 @@ const mockFriends = [
     },
 ];
 
-const ContactList = ({ setStep, onSelectPeople, type, handleBack, ifModal, groupData }) => {
+const BottomContactList = ({ setStep, onSelectPeople, type, handleBack, ifModal, groupData }) => {
     // Initialize states with groupData if in modal mode
     const [contacts, setContacts] = useState(ifModal && groupData ? groupData.contacts : []);
     const [friends, setFriends] = useState(ifModal && groupData ? groupData.friends : mockFriends);

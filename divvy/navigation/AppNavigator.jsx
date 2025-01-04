@@ -18,9 +18,9 @@ export default function AppNavigation() {
         <NavigationContainer>
             <App.Navigator screenOptions={{ headerShown: false }}>
                 {isAuthenticated ? (
-                    <App.Screen name="Main" component={TabNavigator} />
+                    <App.Screen name="Main" component={AuthNavigator} />
                 ) : (
-                    <App.Screen name="Auth" component={AuthNavigator} />
+                    <App.Screen name="Auth" component={UploadScreen} />
                 )}
             </App.Navigator>
         </NavigationContainer>

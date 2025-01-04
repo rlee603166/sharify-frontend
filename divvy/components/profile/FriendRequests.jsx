@@ -1,3 +1,4 @@
+// components/profile/FriendRequest.js
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { User, UserPlus, ChevronRight, Check, X } from "lucide-react-native";

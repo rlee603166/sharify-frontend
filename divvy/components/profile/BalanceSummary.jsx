@@ -1,3 +1,4 @@
+// components/profile/BalanceSummary.js
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { ArrowUp, ArrowDown } from "lucide-react-native";
