@@ -9,7 +9,9 @@ export const UserProvider = ({ children }) => {
 
     const [state, setState] = useState({
         accessToken: null,
-        username: null,
+        user_id: 1,
+        name: "Ryan Lee",
+        username: "sush",
         phone: null,
         isAuthenticated: false,
         isLoading: true,

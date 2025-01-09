@@ -24,7 +24,9 @@ import { X, Plus, UserPlus } from "lucide-react-native";
 import ContactList from "../../components/main/ContactList";
 import ReceiptItemView from "../../components/receipt/ReceiptItem";
 import theme, { profileTheme } from "../../theme";
-import ReceiptService from "../../services/ReceiptService";
+import ReceiptProcessor from "../../services/ReceiptProcessor";
+
+import { useUser } from "../../services/UserProvider";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -210,7 +212,7 @@ const TotalAmountView = ({ totalAmount, isLoading, onSplitBill, disabled }) => (
     </View>
 );
 
-const ReceiptView = ({ isLoading, setStep, onProcessed, selectedPeople, photoUri }) => {
+const ReceiptView = ({ isLoading, setStep, onProcessed, selectedPeople, photoUri, ocrData }) => {
     const [transaction, setTransaction] = useState({ ...blankTransaction });
     const [group, setGroup] = useState({});
     const [error, setError] = useState(null);
@@ -224,8 +226,9 @@ const ReceiptView = ({ isLoading, setStep, onProcessed, selectedPeople, photoUri
     const fadeAnim2 = useRef(new Animated.Value(0)).current;
     const [groupData, setGroupData] = useState(null);
 
-    const receiptService = new ReceiptService();
-
+    const receiptService = new ReceiptProcessor();
+    const state = useUser();
+    const name = state;
 
     useEffect(() => {
         const keyboardWillShow = Keyboard.addListener(
@@ -244,19 +247,15 @@ const ReceiptView = ({ isLoading, setStep, onProcessed, selectedPeople, photoUri
             }
         );
 
-        fetchReceipt();
         transformNames(selectedPeople, true);
         setGroupData(selectedPeople);
+        setTransaction(ocrData);
 
         return () => {
             keyboardWillShow.remove();
             keyboardWillHide.remove();
         };
     }, []);
-
-    const fetchReceipt = async () => {
-        setTransaction(mockTransaction);
-    };
 
     const transformNames = (newUsers, isInit) => {
         const users = [
@@ -268,17 +267,9 @@ const ReceiptView = ({ isLoading, setStep, onProcessed, selectedPeople, photoUri
             id: user.id,
             name: user.name,
         }));
-        if (isInit) {
-            setGroup(prev => ({
-                id: 1,
-                name: "Bree Flowies",
-                members: [...newMembers],
-            }));
-        } else {
-            setGroup(prev => ({
-                members: [...newMembers],
-            }));
-        }
+        setGroup(prev => ({
+            members: [name, ...newMembers],
+        }));
     };
 
     const toggleEditMode = () => {
@@ -303,7 +294,7 @@ const ReceiptView = ({ isLoading, setStep, onProcessed, selectedPeople, photoUri
         setShowContactList(true);
     };
 
-    const handleSelectPeople = ( newSelectedPeople ) => {
+    const handleSelectPeople = newSelectedPeople => {
         // Merge the selections while preserving existing selections
         const mergedContacts = newSelectedPeople.contacts.map(contact => ({
             ...contact,

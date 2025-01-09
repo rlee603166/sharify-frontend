@@ -530,8 +530,6 @@ const styles = StyleSheet.create({
     },
     totalContainer: {
         padding: 16,
-        borderTopWidth: 1,
-        borderTopColor: "#e0e0e0",
     },
     totalLabel: {
         fontSize: 16,

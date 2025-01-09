@@ -12,7 +12,7 @@ import {
 import UsernameInput from "../../components/auth/UsernameInput";
 import SMSVerificationView from "../../components/auth/SMSVerificationView";
 
-import { useUser } from "../../UserProvider";
+import { useUser } from "../../services/UserProvider";
 import theme from "../../theme/index.js";
 
 const LoginScreen = ({ navigation }) => {

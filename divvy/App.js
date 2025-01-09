@@ -3,8 +3,7 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AppNavigation from './navigation/AppNavigator';
 
-import { UserProvider } from './UserProvider';
-import { useUser } from './UserProvider';
+import { UserProvider, useUser } from './services/UserProvider';
 
 
 const RootStack = createNativeStackNavigator();

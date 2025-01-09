@@ -7,7 +7,7 @@ import TabNavigator from "./TabNavigator";
 import UploadNavigator from "./UploadNavigator";
 import ContactList from "../components/main/ContactList";
 import AuthNavigator from "./AuthNavigator";
-import { useUser } from "../UserProvider";
+import { useUser } from "../services/UserProvider";
 
 const App = createNativeStackNavigator();
 

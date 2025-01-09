@@ -1,127 +1,49 @@
-export class Person {
-    constructor(name) {
-        this.name = name;
-        this.items = [];
-        this.subtotal = 0;
+import FormData from "form-data";
+
+class ReceiptService {
+    constructor() {
+        this.apiUrl = "http://47.144.148.193:8000/api/v1";
     }
 
-    addItem(item) {
-        this.items = [...this.items, item];
-        this.subtotal = this.items.reduce((total, item) => total + item.getPricePer(), 0);
-    }
-    
-    setItems(items) {
-        this.items = items;
-        this.subtotal = this.items.reduce((total, item) => total + item.getPricePer(), 0);
-    }
+    async upload(photoUri, user_id) {
+        try {
+            const response = await fetch(photoUri);
+            const blob = await response.blob();
 
-    getItems() {
-        return this.items;
-    }
+            const formData = new FormData();
+            formData.append("user_id", user_id);
+            const fileExtension = photoUri.split(".").pop() || "jpg";
 
-    getName() {
-        return this.name;
-    }
-
-    toString() {
-        return `<Person ${this.name}>`
-    }
-}
-
-export class Item {
-    constructor(name, price, users) {
-        this.name = name;
-        this.price = price;
-        this.users = users; 
-    }
-
-    getName() {
-        return this.name;
-    }
-
-    getPricePer() {
-        return this.price / this.users;
-    }
-}
-
-export default class ReceiptService {
-    constructor() {}
-
-    processTransaction(receipt, group) {
-        const personTotals = {};
-        
-        group.members.forEach((person) => {
-            personTotals[person.name] = new Person(person.name);
-        });
-
-        receipt.items.forEach((item) => {
-            const size = item.people.length;
-            item.people.forEach((person) => {
-                personTotals[person].addItem(new Item(item.name, item.price, size));  
+            formData.append("image", {
+                uri: photoUri,
+                type: "image/*",
+                name: `receipt.${fileExtension}`,
             });
-        });
 
-        return personTotals;
+            const uploadResponse = await fetch(`${this.apiUrl}/receipts/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                body: formData,
+            });
+
+            const data = await uploadResponse.json();
+            return data;
+        } catch (error) {
+            console.error("Upload error:", error);
+            throw error;
+        }
     }
 
-    processReceipt(receipt, group) {
-        const result = this.processTransaction(receipt, group);
-        // more logic
-        return result;
+    async fetchReceipt(receipt_id) {
+        const response = await fetch(`${this.apiUrl}/receipts/${receipt_id}`);
+        const data = await response.json();
+
+        if (data.status === "pending") return;
+
+        return data;
     }
 }
 
-// Test data setup
-const mockTransaction = {
-  id: "1",
-  subtotal: 82,
-  items: [
-    {
-      id: "1",
-      name: "Pasta Carbonara",
-      price: 22.5,
-      people: ["John", "Alice"]
-    },
-    {
-      id: "2",
-      name: "Caesar Salad",
-      price: 15.0,
-      people: ["John", "Alice"]
-    },
-    {
-      id: "3",
-      name: "Grilled Salmon",
-      price: 32.0,
-      people: ["Alice", "Bob", "John"]
-    },
-    {
-      id: "4",
-      name: "Glass of Wine",
-      price: 12.5,
-      people: ["Alice", "Bob", "John"]
-    },
-  ],
-};
-const mockReceipt = {
-    items: [
-        { name: "Pizza", price: 20, people: ["John", "Alice"] },
-        { name: "Salad", price: 15, people: ["Bob"] },
-        { name: "Wine", price: 30, people: ["Alice", "Bob", "John"] }
-    ]
-};
-
-const mockGroup = {
-    id: "1",
-    name: "Dinner Group",
-    members: [
-      { id: "1", name: "John" },
-      { id: "2", name: "Alice" },
-      { id: "3", name: "Bob" },
-    ],
-};
-
-// Test the implementation
-const receiptService = new ReceiptService();
-const result = receiptService.processTransaction(mockTransaction, mockGroup);
-
-
+export default ReceiptService;
