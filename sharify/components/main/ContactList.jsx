@@ -22,10 +22,14 @@ const CheckIcon = memo(() => <Text style={styles.checkmark}>✓</Text>);
 
 // Helper function to get initials
 const getInitials = name => {
+    // Split the name into words
     const words = name.trim().split(/\s+/);
+
     if (words.length === 1) {
+        // If single word, take up to first two characters
         return words[0].substring(0, 2).toUpperCase();
     } else {
+        // Take first character of first and last word
         return (words[0][0] + words[words.length - 1][0]).toUpperCase();
     }
 };
@@ -66,16 +70,29 @@ const SelectedAvatars = memo(({ selectedItems, onRemove }) => {
                     >
                         {item.avatar ? (
                             <Image
-                                style={styles.selectedAvatar}
+                                style={[
+                                    styles.selectedAvatar,
+                                    item.type === "group" && styles.selectedAvatarGroup,
+                                ]}
                                 source={{ uri: item.avatar }}
                                 resizeMode="cover"
                                 cachePolicy="memory"
                             />
                         ) : (
-                            <View style={styles.selectedAvatarFallback}>
+                            <View
+                                style={[
+                                    styles.selectedAvatarFallback,
+                                    item.type === "group" && styles.selectedAvatarGroup,
+                                ]}
+                            >
                                 <Text style={styles.selectedAvatarText}>
                                     {getInitials(item.name)}
                                 </Text>
+                            </View>
+                        )}
+                        {item.type === "group" && (
+                            <View style={styles.groupIndicator}>
+                                <Text style={styles.groupIndicatorText}>G</Text>
                             </View>
                         )}
                         <View style={styles.removeButton}>
@@ -125,10 +142,12 @@ const ContactList = ({
     fetchedFriends,
     fetchedGroups,
 }) => {
+    // Refs for maintaining data consistency
     const contactsRef = useRef([]);
     const friendsRef = useRef([]);
     const groupsRef = useRef([]);
 
+    // State management
     const [contacts, setContacts] = useState([]);
     const [friends, setFriends] = useState([]);
     const [groups, setGroups] = useState([]);
@@ -138,6 +157,7 @@ const ContactList = ({
     const [filteredData, setFilteredData] = useState([]);
     const { id } = useUser();
 
+    // Memoized filtered data calculation
     const calculateFilteredData = useCallback(
         (currentData, query) => {
             if (!currentData) return [];
@@ -161,6 +181,7 @@ const ContactList = ({
         try {
             const { status } = await Contacts.requestPermissionsAsync();
             if (status === "granted") {
+                // In loadContacts function
                 const { data } = await Contacts.getContactsAsync({
                     fields: [
                         Contacts.Fields.Name,
@@ -171,15 +192,21 @@ const ContactList = ({
                 });
 
                 if (data.length > 0) {
+                    // Debug log raw contact data
                     console.log("Raw contact data example:", data[0]);
+
                     const formattedContacts = data
                         .filter(contact => contact.name)
                         .map(contact => {
+                            // Debug log each contact's phone numbers
                             console.log(`Phone numbers for ${contact.name}:`, contact.phoneNumbers);
+
                             return {
                                 id: contact.id,
                                 name: contact.name,
+                                // Get primary phone number if available
                                 phone: contact.phoneNumbers?.[0]?.number || "",
+                                // Store all phone numbers
                                 phoneNumbers: contact.phoneNumbers,
                                 avatar: contact.imageAvailable
                                     ? `file://${contact.image?.uri}`
@@ -200,80 +227,61 @@ const ContactList = ({
         }
     };
 
+    // Initialize data
     useEffect(() => {
         let mounted = true;
-      
+
         const initializeData = async () => {
-          try {
-            setLoading(true);
-            await loadContacts();
-      
-            if (ifModal) {
-              if (groupData) {
-                const selectedIds = new Set(
-                  groupData.uniqueMemberIds.map((member) => member.id)
-                );
-                const updatedFriends = (groupData.friends || []).map((friend) => ({
-                  ...friend,
-                  selected: selectedIds.has(friend.id),
-                }));
-                const updatedGroups = (groupData.groups || []).map((group) => ({
-                  ...group,
-                  selected: selectedIds.has(group.id),
-                }));
-                const updatedContacts = contactsRef.current.map((contact) => ({
-                  ...contact,
-                  selected: selectedIds.has(contact.id),
-                }));
-      
-                setFriends(updatedFriends);
-                setGroups(updatedGroups);
-                setContacts(updatedContacts);
-      
-                friendsRef.current = updatedFriends;
-                groupsRef.current = updatedGroups;
-                contactsRef.current = updatedContacts;
-              } else {
-                setFriends([]);
-                setGroups([]);
-                const initialContacts = contactsRef.current.map((contact) => ({
-                  ...contact,
-                  selected: false,
-                }));
-                setContacts(initialContacts);
-      
-                friendsRef.current = [];
-                groupsRef.current = [];
-                contactsRef.current = initialContacts;
-              }
-            } else {
-              if (mounted) {
-                const initialFriends =
-                  fetchedFriends?.map((friend) => ({ ...friend, selected: false })) || [];
-                const initialGroups =
-                  fetchedGroups?.map((group) => ({ ...group, selected: false })) || [];
-      
-                setFriends(initialFriends);
-                setGroups(initialGroups);
-      
-                friendsRef.current = initialFriends;
-                groupsRef.current = initialGroups;
-              }
+            try {
+                setLoading(true);
+                await loadContacts();
+
+                if (ifModal && groupData) {
+                    if (mounted) {
+                        // Use the explicit selection state for friends and groups,
+                        // and only update contacts if needed (here assuming contacts
+                        // should reflect their own explicit selection state)
+                        const updatedFriends = groupData.friends || [];
+                        const updatedGroups = groupData.groups || [];
+                        const updatedContacts = groupData.contacts || contactsRef.current;
+                
+                        setFriends(updatedFriends);
+                        setGroups(updatedGroups);
+                        setContacts(updatedContacts);
+                
+                        friendsRef.current = updatedFriends;
+                        groupsRef.current = updatedGroups;
+                        contactsRef.current = updatedContacts;
+                    }
+                } else {
+                    if (mounted) {
+                        const initialFriends =
+                            fetchedFriends?.map(friend => ({ ...friend, selected: false })) || [];
+                        const initialGroups =
+                            fetchedGroups?.map(group => ({ ...group, selected: false })) || [];
+
+                        setFriends(initialFriends);
+                        setGroups(initialGroups);
+
+                        friendsRef.current = initialFriends;
+                        groupsRef.current = initialGroups;
+                    }
+                }
+            } catch (error) {
+                console.error("Error initializing data:", error);
+            } finally {
+                if (mounted) setLoading(false);
             }
-          } catch (error) {
-            console.error("Error initializing data:", error);
-          } finally {
-            if (mounted) setLoading(false);
-          }
         };
-      
+
         initializeData();
-      
+
         return () => {
-          mounted = false;
+            mounted = false;
         };
     }, []);
-      
+
+    // Update filtered data when tab or search changes
     useEffect(() => {
         const currentData =
             selectedTab === "contacts" ? contacts : selectedTab === "friends" ? friends : groups;
@@ -294,6 +302,7 @@ const ContactList = ({
 
         const memberMap = new Map();
 
+        // Add selected contacts
         selectedContacts.forEach(contact => {
             console.log(`Processing contact ${contact.name}:`, contact);
             memberMap.set(contact.id, {
@@ -382,6 +391,7 @@ const ContactList = ({
                     selectedGroupMemberIds.has(userId)
                 );
             };
+              
 
             const updateList = (list, setList, ref) => {
                 const itemToUpdate = list.find(item => item.id === id);
@@ -434,7 +444,7 @@ const ContactList = ({
         groups
             .filter(g => g.selected)
             .flatMap(g => g.members || [])
-            .filter(member => member.id !== id)
+            .filter(member => member.id !== id && member.id !== id)
             .forEach(member => {
                 console.log("Adding member:", member.id);
                 uniqueMembersMap.set(member.id, member);
@@ -443,7 +453,7 @@ const ContactList = ({
         console.log("Processing friends...");
         friends
             .filter(f => f.selected)
-            .filter(friend => friend.id !== id)
+            .filter(friend => friend.id !== id && friend.id !== id)
             .forEach(friend => {
                 console.log("Adding friend:", friend.id);
                 uniqueMembersMap.set(friend.id, friend);
@@ -451,8 +461,8 @@ const ContactList = ({
 
         console.log("Processing contacts...");
         contacts
-            .filter(c => c.selected)
-            .filter(contact => contact.id !== id)
+            .filter(c => c.selected) // Add this line to filter selected contacts
+            .filter(contact => contact.id !== id && contact.id !== id)
             .forEach(contact => {
                 console.log("Adding contact:", contact.id);
                 uniqueMembersMap.set(contact.id, contact);
@@ -462,10 +472,11 @@ const ContactList = ({
             contacts: contacts,
             friends: friends,
             groups: groups,
-            uniqueMemberIds: Array.from(uniqueMembersMap.values()),
+            uniqueMemberIds: Array.from(uniqueMembersMap.values()), // Use keys() for unique IDs
         };
 
         console.log("Selected Data:", JSON.stringify(selectedData, null, 2));
+
         onSelectPeople(selectedData);
     }, [contacts, friends, groups, id, onSelectPeople]);
 
@@ -851,6 +862,24 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "bold",
         marginTop: -2,
+    },
+    selectedAvatarGroup: {},
+    groupIndicator: {
+        position: "absolute",
+        bottom: -2,
+        right: -2,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: "#147337",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    groupIndicatorText: {
+        color: "#FFF",
+        fontSize: 10,
+        fontWeight: "bold",
+        marginTop: 0,
     },
 });
 
