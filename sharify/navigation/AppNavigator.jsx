@@ -6,13 +6,15 @@ import TabNavigator from "./TabNavigator";
 import AuthNavigator from "./AuthNavigator";
 import UploadNavigator from "./UploadNavigator";
 import { useUser } from "../services/UserProvider";
-import { FriendsProvider } from "../hooks/useFriends";
-import { GroupsProvider } from "../context/GroupsContext";
+import { FriendsProvider, useFriends } from "../hooks/useFriends";
+import { GroupsProvider, useGroups } from "../context/GroupsContext";
 
 const App = createNativeStackNavigator();
 
 // Create a wrapper component for authenticated screens
 const AuthenticatedScreens = () => {
+
+
     return (
         <FriendsProvider initialFriends={[]}>
             <GroupsProvider initialGroups={[]}>

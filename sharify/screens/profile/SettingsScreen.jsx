@@ -7,7 +7,6 @@ import {
     SafeAreaView,
     Platform,
     StatusBar,
-    Image,
     ScrollView,
     Alert,
 } from "react-native";
@@ -15,6 +14,7 @@ import { X, Camera, Trash2, LogOut } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { profileTheme } from "../../theme";
 import { useUser } from "../../services/UserProvider";
+import { Image } from "expo-image";
 
 const SettingsScreen = ({ navigation }) => {
     const {

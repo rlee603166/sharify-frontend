@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
+import { Image } from "expo-image";
 
 const UserContext = createContext(null);
 
@@ -23,6 +24,15 @@ export const UserProvider = ({ children }) => {
     useEffect(() => {
         checkAuthState();
     }, []);
+
+    const preLoadUser = async url => {
+        try {
+            await Image.prefetch(url);
+            console.log("successfully fetched user pfp");
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     const updateProfileImage = async imageUri => {
         setState(prev => ({
@@ -58,7 +68,7 @@ export const UserProvider = ({ children }) => {
                 isLocalImage = !path.startsWith("http");
             }
             const avatar = isLocalImage ? `${apiURL}/images/pfp/${path}` : path;
-
+            preLoadUser(avatar);
             setState(prev => ({
                 ...prev,
                 avatar: avatar,
@@ -214,6 +224,8 @@ export const UserProvider = ({ children }) => {
                     isLoading: false,
                     error: null,
                 }));
+
+                if (avatar) preLoadUser(avatar);
             }
         } catch (error) {
             console.error("Loading user data failed:", error);

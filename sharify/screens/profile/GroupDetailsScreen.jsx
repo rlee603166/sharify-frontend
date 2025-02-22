@@ -6,7 +6,6 @@ import {
     SafeAreaView,
     TouchableOpacity,
     ScrollView,
-    Image,
     StatusBar,
     Modal,
     TextInput,
@@ -15,15 +14,16 @@ import {
     Linking,
     KeyboardAvoidingView,
 } from "react-native";
-import { ArrowLeft, Users, MoreVertical, Trash2, Image as ImageIcon } from "lucide-react-native";
+import { ArrowLeft, Users, MoreVertical, Trash2 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { friendTheme } from "../../theme";
 import { useGroups } from "../../context/GroupsContext";
 import { useUser } from "../../services/UserProvider";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Image } from "expo-image";
 
 // Helper function to get two-letter initials from a name
-const getInitials = (name) => {
+const getInitials = name => {
     if (!name) return "";
     const words = name.trim().split(" ");
     if (words.length >= 2) {
@@ -333,6 +333,7 @@ const GroupDetailsScreen = ({ navigation, route }) => {
                                 <Image
                                     source={{ uri: localGroupImage }}
                                     style={styles.groupImage}
+                                    transition={50}
                                 />
                             ) : (
                                 <View style={styles.placeholderImage}>
@@ -362,6 +363,7 @@ const GroupDetailsScreen = ({ navigation, route }) => {
                                                 <Image
                                                     source={{ uri: member.avatar }}
                                                     style={styles.avatar}
+                                                    transition={50}
                                                 />
                                             ) : (
                                                 <View style={styles.avatarPlaceholder}>

@@ -8,7 +8,6 @@ import {
     SafeAreaView,
     StatusBar,
     ActivityIndicator,
-    Image,
 } from "react-native";
 import { X, UserPlus } from "lucide-react-native";
 import { friendTheme } from "../../theme";
@@ -17,6 +16,7 @@ import ProfileIcon from "../../components/main/ProfileIcon";
 import { useFriends } from "../../hooks/useFriends";
 import UserService from "../../services/UserService";
 import debounce from "lodash/debounce";
+import { Image } from "expo-image";
 
 function SearchUsersScreen({ navigation }) {
     const [searchQuery, setSearchQuery] = useState("");

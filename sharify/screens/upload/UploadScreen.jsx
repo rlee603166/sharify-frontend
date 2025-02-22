@@ -32,10 +32,15 @@ const UploadScreen = ({ navigation }) => {
     const [receiptTotal, setReceiptTotal] = useState(0);
 
     const { id } = useUser();
-    const { friends } = useFriends();
-    const { groups } = useGroups();
+    const { friends, loadFriends } = useFriends();
+    const { groups, loadGroups } = useGroups();
     const receiptService = new ReceiptService();
     const userService = new UserService();
+
+    useEffect(() => {
+        loadFriends(id);
+        loadGroups(id);
+    }, []);
 
     useEffect(() => {
         if (ocrData && Array.isArray(ocrData.items)) {

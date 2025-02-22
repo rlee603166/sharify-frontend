@@ -29,7 +29,6 @@ const ProfileIcon = ({
                     style={styles.avatar}
                     source={{ uri: avatar }}
                     resizeMode="cover"
-                    cachePolicy="memory"
                 />
             ) : (
                 <View

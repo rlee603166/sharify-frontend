@@ -1,8 +1,9 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Settings } from "lucide-react-native";
 import { profileTheme } from "../../theme";
 import { useUser } from "../../services/UserProvider";
+import { Image } from "expo-image";
 
 const ProfileHeader = ({ navigation }) => {
     const { name, username, avatar } = useUser();

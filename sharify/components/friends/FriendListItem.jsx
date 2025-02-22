@@ -1,8 +1,9 @@
 // components/friends/FriendListItem.js
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Check } from "lucide-react-native";
 import { friendTheme } from "../../theme";
+import { Image } from "expo-image";
 
 export function FriendListItem({ friend, onPress, editMode, selected, onSelect }) {
     const getInitials = name => {
@@ -37,6 +38,7 @@ export function FriendListItem({ friend, onPress, editMode, selected, onSelect }
                         onError={e => {
                             console.error("Image loading error:", e.nativeEvent.error);
                         }}
+                        transition={100}
                         onLoad={() => console.log("Image loaded successfully")}
                     />
                 ) : (

@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 import { Alert } from "react-native";
 import UserService from "../services/UserService";
 import { useUser } from "../services/UserProvider";
+import { Image } from "expo-image";
 
 const FriendsContext = createContext();
 
@@ -26,6 +27,20 @@ export function FriendsProvider({ children, initialFriends = [] }) {
     useEffect(() => {
         loadFriends(id);
     }, []);
+
+    const prefetchFriends = async (friendData, frequests) => {
+        const allAvatars = [
+            ...friendData.map(friend => friend.avatar).filter(avatar => avatar),
+            ...frequests.map(friend => friend.avatar).filter(avatar => avatar),
+        ];
+
+        try {
+            await Promise.all(allAvatars.map(avatar => Image.prefetch(avatar)));
+            console.log('successfully fetched friends');
+        } catch (error) {
+            console.error(error);
+        }
+    }
 
     const loadFriends = async id => {
         const [friendsData, friendRequests] = await Promise.all([
@@ -79,6 +94,8 @@ export function FriendsProvider({ children, initialFriends = [] }) {
 
         setFriends(data);
         setRequests(frequests);
+
+        prefetchFriends(data, frequests);
     };
 
     const transformFriendData = friend => {

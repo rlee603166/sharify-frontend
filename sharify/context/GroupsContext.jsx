@@ -4,6 +4,7 @@ import UserService from "../services/UserService";
 import { useUser } from "../services/UserProvider";
 import { Alert } from "react-native";
 import { v4 as uuidv4 } from "uuid";
+import { Image } from "expo-image";
 
 const GroupsContext = createContext();
 
@@ -25,6 +26,16 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
     useEffect(() => {
         loadGroups(id);
     }, []);
+
+    const prefetchGroupsImage = async groupData => {
+        const data = [...groupData.map(group => group.groupImage).filter(groupImage => groupData)];
+        try {
+            await Promise.all(data.map(data => Image.prefetch(data)));
+            console.log("successfully fetched groups");
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     const loadGroups = async id => {
         const groupsData = await userService.getGroups(id);
@@ -54,6 +65,7 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
         }));
 
         setGroups(data.sort((a, b) => a.name.localeCompare(b.name)));
+        prefetchGroupsImage(data);
     };
 
     const createGroup = async (name, selectedFriends, groupImage = null) => {

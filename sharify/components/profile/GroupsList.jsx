@@ -1,11 +1,11 @@
 // components/profile/GroupsList.js
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet  } from "react-native";
 import { Users, Plus } from "lucide-react-native";
 import { profileTheme } from "../../theme";
-import { friendTheme } from "../../theme";
 import { useGroups } from "../../context/GroupsContext";
 import { useNavigation } from "@react-navigation/native";
+import { Image } from "expo-image";
 
 const GroupsList = ({ navigation }) => {
     const { groups } = useGroups();
@@ -50,7 +50,7 @@ const GroupsList = ({ navigation }) => {
                                 />
                             ) : (
                                 <View style={styles.groupAvatar}>
-                                    <Users width={24} height={24} color="#6366F1" />
+                                    <Users width={24} height={24} color="white" />
                                 </View>
                             )}
                             <View style={styles.groupInfo}>
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: friendTheme.colors.indigo50,
+        backgroundColor: profileTheme.colors.primary,
         alignItems: "center",
         justifyContent: "center",
     },
