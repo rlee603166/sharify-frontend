@@ -19,14 +19,25 @@
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to take photos.",
         "NSMicrophoneUsageDescription": "This app uses the microphone for videos.",
-        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos to show contact profile pictures."
+        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos to show contact profile pictures.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#9896F1"
       },
-      "permissions": ["CAMERA", "RECORD_AUDIO", "READ_EXTERNAL_STORAGE"]
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
+      ]
     },
     "plugins": [
       [
@@ -48,7 +59,13 @@
           "contactsPermission": "Allow $(PRODUCT_NAME) to access your contacts.",
           "contactsPhotoPermission": "Allow $(PRODUCT_NAME) to access your contacts photos."
         }
-      ]
-    ]
+      ],
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a3ff316a-a3aa-4dc6-820f-a71befed088f"
+      }
+    }
   }
 }
