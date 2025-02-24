@@ -28,7 +28,7 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
     }, []);
 
     const prefetchGroupsImage = async groupData => {
-        const data = groupData
+        const data = (groupData || [])
             .map(group => group.groupImage)
             .filter(groupImage => groupImage != null);
         try {
@@ -40,34 +40,61 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
     };
 
     const loadGroups = async id => {
-        const groupsData = await userService.getGroups(id);
-        const data = groupsData.map((group, index) => ({
-            id: group.group_id,
-            name: group.name,
-            groupImage: group.imageUri
-                ? `${userService.apiURL}/images/groups/${group.imageUri}`
-                : null,
-            members: group.members.map(member => {
-                let isLocalImage;
-                if (member.users.imageUri) {
-                    isLocalImage = !member.users.imageUri.startsWith("http");
-                }
-                const avatar = isLocalImage
-                    ? `${userService.apiURL}/images/pfp/${member.users.imageUri}`
-                    : member.users.imageUri;
+        try {
+            const groupsData = await userService.getGroups(id);
 
-                return {
-                    id: member.user_id,
-                    name: member.users.name,
-                    username: member.users.username,
-                    phone: member.users.phone,
-                    avatar: avatar,
-                };
-            }),
-        }));
+            console.log("groupsData:", groupsData, "Type:", typeof groupsData);
 
-        setGroups(data.sort((a, b) => a.name.localeCompare(b.name)));
-        prefetchGroupsImage(data);
+            const data = Array.isArray(groupsData)
+                ? groupsData.map(group => {
+                      const members = Array.isArray(group.members)
+                          ? group.members.map(member => {
+                                if (member.users && typeof member.users === "object") {
+                                    let isLocalImage;
+                                    if (member.users.imageUri) {
+                                        isLocalImage = !member.users.imageUri.startsWith("http");
+                                    }
+
+                                    const avatar = isLocalImage
+                                        ? `${userService.apiURL}/images/pfp/${member.users.imageUri}`
+                                        : member.users.imageUri;
+
+                                    return {
+                                        id: member.user_id,
+                                        name: member.users.name || "",
+                                        username: member.users.username || "",
+                                        phone: member.users.phone || "",
+                                        avatar: avatar || null,
+                                    };
+                                } else {
+                                    return {
+                                        id: member.user_id || "",
+                                        name: "",
+                                        username: "",
+                                        phone: "",
+                                        avatar: null,
+                                    };
+                                }
+                            })
+                          : []; 
+
+                      return {
+                          id: group.group_id,
+                          name: group.name || "",
+                          groupImage: group.imageUri
+                              ? `${userService.apiURL}/images/groups/${group.imageUri}`
+                              : null,
+                          members: members,
+                      };
+                  })
+                : []; 
+
+            const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+            setGroups(sortedData);
+            prefetchGroupsImage(sortedData);
+        } catch (error) {
+            console.error("Failed to load groups:", error);
+        }
     };
 
     const createGroup = async (name, selectedFriends, groupImage = null) => {

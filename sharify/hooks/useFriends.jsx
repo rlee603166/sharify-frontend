@@ -44,59 +44,75 @@ export function FriendsProvider({ children, initialFriends = [] }) {
     };
 
     const loadFriends = async id => {
-        const [friendsData, friendRequests] = await Promise.all([
-            userService.getFriends(id),
-            userService.getFriendRequests(id),
-        ]);
+        try {
+            const [friendsData, friendRequests] = await Promise.all([
+                userService.getFriends(id),
+                userService.getFriendRequests(id),
+            ]);
 
-        const data = friendsData.map((friend, index) => {
-            let isLocalImage;
-            if (friend.imageUri) {
-                isLocalImage = !friend.imageUri.startsWith("http");
-            }
+            // Debugging: Log the type and value of friendsData and friendRequests
+            console.log("friendsData:", friendsData, "Type:", typeof friendsData);
+            console.log("friendRequests:", friendRequests, "Type:", typeof friendRequests);
 
-            const avatar = isLocalImage
-                ? `${userService.apiURL}/images/pfp/${friend.imageUri}`
-                : friend.imageUri;
+            // Ensure friendsData is an array before calling map
+            const data = Array.isArray(friendsData)
+                ? friendsData.map(friend => {
+                      let isLocalImage;
+                      if (friend.imageUri) {
+                          isLocalImage = !friend.imageUri.startsWith("http");
+                      }
 
-            return {
-                id: friend.user_id,
-                friend_id: friend.friend_id,
-                name: friend.name,
-                phone: `${friend.phone}` || "",
-                username: `${friend.username}` || "",
-                avatar: avatar || null,
-                status: friend.status,
-                selected: false,
-            };
-        });
+                      const avatar = isLocalImage
+                          ? `${userService.apiURL}/images/pfp/${friend.imageUri}`
+                          : friend.imageUri;
 
-        const frequests = friendRequests.map((friend, index) => {
-            let isLocalImage;
-            if (friend.imageUri) {
-                isLocalImage = !friend.imageUri.startsWith("http");
-            }
+                      return {
+                          id: friend.user_id,
+                          friend_id: friend.friend_id,
+                          name: friend.name,
+                          phone: `${friend.phone}` || "",
+                          username: `${friend.username}` || "",
+                          avatar: avatar || null,
+                          status: friend.status,
+                          selected: false,
+                      };
+                  })
+                : []; // Fallback to an empty array if friendsData is not an array
 
-            const avatar = isLocalImage
-                ? `${userService.apiURL}/images/pfp/${friend.imageUri}`
-                : friend.imageUri;
+            // Ensure friendRequests is an array before calling map
+            const frequests = Array.isArray(friendRequests)
+                ? friendRequests.map(friend => {
+                      let isLocalImage;
+                      if (friend.imageUri) {
+                          isLocalImage = !friend.imageUri.startsWith("http");
+                      }
 
-            return {
-                id: friend.user_id,
-                friend_id: friend.friend_id,
-                name: friend.name,
-                phone: `${friend.phone}` || "",
-                username: `${friend.username}` || "",
-                avatar: avatar || null,
-                status: friend.status,
-                selected: false,
-            };
-        });
+                      const avatar = isLocalImage
+                          ? `${userService.apiURL}/images/pfp/${friend.imageUri}`
+                          : friend.imageUri;
 
-        setFriends(data);
-        setRequests(frequests);
+                      return {
+                          id: friend.user_id,
+                          friend_id: friend.friend_id,
+                          name: friend.name,
+                          phone: `${friend.phone}` || "",
+                          username: `${friend.username}` || "",
+                          avatar: avatar || null,
+                          status: friend.status,
+                          selected: false,
+                      };
+                  })
+                : []; // Fallback to an empty array if friendRequests is not an array
 
-        prefetchFriends(data, frequests);
+            // Update state with the processed data
+            setFriends(data);
+            setRequests(frequests);
+
+            // Prefetch friends data (assuming this is a utility function)
+            prefetchFriends(data, frequests);
+        } catch (error) {
+            console.error("Failed to load friends:", error);
+        }
     };
 
     const transformFriendData = friend => {
@@ -119,7 +135,7 @@ export function FriendsProvider({ children, initialFriends = [] }) {
 
     const updateFriendsList = async (id, setFriends) => {
         const friendsData = await userService.getFriends(id);
-        const transformedData = friendsData.map(transformFriendData);
+        const transformedData = friendsData?.map(transformFriendData);
         setFriends(transformedData);
     };
 
