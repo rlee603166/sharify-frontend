@@ -68,14 +68,14 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: profileTheme.colors.gray[100],
+        backgroundColor: "#F0F0F0",
         alignItems: "center",
         justifyContent: "center",
     },
     avatarText: {
         fontSize: 32,
         fontWeight: "600",
-        color: profileTheme.colors.secondary,
+        color: "#666666",
     },
     nameContainer: {
         justifyContent: "center",

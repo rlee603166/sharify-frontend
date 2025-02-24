@@ -33,7 +33,9 @@ const FriendsSummary = ({ navigation }) => {
                 {friend.avatar ? (
                     <Image source={{ uri: friend.avatar }} style={styles.selectionAvatar} />
                 ) : (
-                    <ProfileIcon name={friend.name} avatar={friend.avatar} />
+                    <View style={styles.selectionAvatarPlaceholder}>
+                        <ProfileIcon name={friend.name} />
+                    </View>
                 )}
                 <Text style={styles.selectionName}>{friend.name}</Text>
             </View>
@@ -62,14 +64,18 @@ const FriendsSummary = ({ navigation }) => {
                         <View style={styles.friendsList}>
                             {displayFriends.map(friend => (
                                 <View key={friend.id} style={styles.friendItem}>
-                                    {friend.avatar ? (
-                                        <Image
-                                            source={{ uri: friend.avatar }}
-                                            style={styles.avatarImage}
-                                        />
-                                    ) : (
-                                        <ProfileIcon name={friend.name}  />
-                                    )}
+                                    <View style={styles.avatarContainer}>
+                                        {friend.avatar ? (
+                                            <Image
+                                                source={{ uri: friend.avatar }}
+                                                style={styles.avatarImage}
+                                            />
+                                        ) : (
+                                            <View style={styles.avatarPlaceholder}>
+                                                <ProfileIcon name={friend.name} />
+                                            </View>
+                                        )}
+                                    </View>
                                     <Text style={styles.friendName} numberOfLines={1}>
                                         {friend.name.split(" ")[0]}
                                     </Text>
@@ -132,13 +138,11 @@ const FriendsSummary = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        gap: profileTheme.spacing.md,
-    },
     headerContainer: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        marginBottom: profileTheme.spacing.md,
     },
     title: {
         fontSize: 16,
@@ -162,7 +166,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 2,
         elevation: 2,
-        marginTop: profileTheme.spacing.md,
     },
     contentContainer: {
         padding: profileTheme.spacing.md,
@@ -175,27 +178,25 @@ const styles = StyleSheet.create({
         alignItems: "center",
         width: 56,
     },
-    avatar: {
+    avatarContainer: {
+        width: 48,
+        height: 48,
+        marginBottom: profileTheme.spacing.sm,
+    },
+    avatarImage: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+    },
+    avatarPlaceholder: {
         width: 48,
         height: 48,
         borderRadius: 24,
         backgroundColor: profileTheme.colors.gray100,
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: profileTheme.spacing.sm,
         borderWidth: 1,
         borderColor: profileTheme.colors.gray300,
-    },
-    avatarImage: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        marginBottom: profileTheme.spacing.sm,
-    },
-    avatarText: {
-        fontSize: 18,
-        fontWeight: "600",
-        color: profileTheme.colors.gray600,
     },
     friendName: {
         fontSize: 14,
@@ -238,7 +239,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: profileTheme.colors.gray500,
     },
-    // Modal styles remain the same
     modalContainer: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -287,11 +287,16 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: profileTheme.colors.background,
+    },
+    selectionAvatarPlaceholder: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: profileTheme.colors.gray100,
         alignItems: "center",
         justifyContent: "center",
         borderWidth: 1,
-        borderColor: profileTheme.colors.border,
+        borderColor: profileTheme.colors.gray300,
     },
     selectionName: {
         fontSize: 16,

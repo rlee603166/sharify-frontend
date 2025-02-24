@@ -4,16 +4,9 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Check } from "lucide-react-native";
 import { friendTheme } from "../../theme";
 import { Image } from "expo-image";
+import ProfileIcon from "../../components/main/ProfileIcon"; // Newly added import
 
 export function FriendListItem({ friend, onPress, editMode, selected, onSelect }) {
-    const getInitials = name => {
-        return name
-            .split(" ")
-            .map(word => word[0])
-            .join("")
-            .toUpperCase();
-    };
-
     // In edit mode, tapping toggles selection.
     // Otherwise, it triggers the normal onPress callback.
     const handlePress = () => {
@@ -42,7 +35,7 @@ export function FriendListItem({ friend, onPress, editMode, selected, onSelect }
                         onLoad={() => console.log("Image loaded successfully")}
                     />
                 ) : (
-                    <Text style={styles.avatarText}>{getInitials(friend.name)}</Text>
+                    <ProfileIcon name={friend.name} size={48} />
                 )}
             </View>
 
@@ -81,9 +74,6 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: friendTheme.colors.gray50,
     },
-    // selectedItem: {
-    //   backgroundColor: friendTheme.colors.indigo50,
-    // },
     avatarContainer: {
         width: 48,
         height: 48,
@@ -97,11 +87,6 @@ const styles = StyleSheet.create({
     avatarImage: {
         width: "100%",
         height: "100%",
-    },
-    avatarText: {
-        fontSize: 18,
-        fontWeight: "600",
-        color: friendTheme.colors.gray600,
     },
     infoContainer: {
         flex: 1,

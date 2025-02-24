@@ -8,7 +8,7 @@ const WelcomeScreen = ({ navigation }) => {
 
     return (
         <ImageBackground
-            source={require('../../assets/welcomescreen.jpg')} // Add your image in the assets folder
+            source={require('../../assets/image.jpg')} // Add your image in the assets folder
             style={styles.backgroundImage}
             resizeMode="cover"
         >
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: "rgba(255, 255, 255, 0.8)", // Slight overlay for readability
+        backgroundColor: "rgba(255, 255, 255, 0.75)", // Slight overlay for readability
     },
     spacer: {
         height: 80,

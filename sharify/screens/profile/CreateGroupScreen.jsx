@@ -17,6 +17,7 @@ import * as ImagePicker from "expo-image-picker";
 import { friendTheme } from "../../theme";
 import { useFriends } from "../../hooks/useFriends";
 import { useGroups } from "../../context/GroupsContext";
+import ProfileIcon from "../../components/main/ProfileIcon"; // Newly added import
 
 const CreateGroupScreen = ({ navigation }) => {
     const [groupName, setGroupName] = useState("");
@@ -147,7 +148,13 @@ const CreateGroupScreen = ({ navigation }) => {
                                 onPress={() => toggleFriendSelection(friend)}
                             >
                                 <View style={styles.leftContainer}>
-                                    <Image source={{ uri: friend.avatar }} style={styles.avatar} />
+                                    {friend.avatar ? (
+                                        <Image source={{ uri: friend.avatar }} style={styles.avatar} />
+                                    ) : (
+                                        <View style={styles.avatarPlaceholder}>
+                                            <ProfileIcon name={friend.name} size={48} />
+                                        </View>
+                                    )}
                                     <View style={styles.friendInfo}>
                                         <Text style={styles.friendName}>{friend.name}</Text>
                                         <Text style={styles.friendUsername}>{friend.username}</Text>
@@ -301,9 +308,18 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        marginRight: friendTheme.spacing[3],
+    },
+    avatarPlaceholder: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: friendTheme.colors.indigo50,
+        alignItems: "center",
+        justifyContent: "center",
         marginRight: friendTheme.spacing[3],
     },
     friendInfo: {

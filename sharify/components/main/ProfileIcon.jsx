@@ -3,13 +3,14 @@ import { View, Text, StyleSheet } from "react-native";
 import { useUser } from "./../../services/UserProvider";
 import { Image } from "expo-image";
 import theme from "../../theme";
+import { friendTheme, profileTheme } from "../../theme";
 
 const ProfileIcon = ({
     name,
     avatar,
     size = 50,
-    backgroundColor = theme.colors.gray[100],
-    textColor = theme.colors.primary,
+    backgroundColor = "#F0F0F0",
+    textColor = "#666666",
     fontSize = 20,
 }) => {
 
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     text: {
-        fontWeight: "bold",
+        fontWeight: 600,
     },
     avatar: {
         width: 50,
