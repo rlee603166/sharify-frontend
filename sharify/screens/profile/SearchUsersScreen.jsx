@@ -14,6 +14,7 @@ import { friendTheme } from "../../theme";
 import SearchBar from "../../components/friends/SearchBar";
 import ProfileIcon from "../../components/main/ProfileIcon";
 import { useFriends } from "../../hooks/useFriends";
+import { useUser } from "../../services/UserProvider";
 import UserService from "../../services/UserService";
 import debounce from "lodash/debounce";
 import { Image } from "expo-image";
@@ -25,6 +26,7 @@ function SearchUsersScreen({ navigation }) {
     // Track friend request status per user id; "requested" means a request was sent.
     const [requestStatus, setRequestStatus] = useState({});
 
+    const state = useUser();
     const { friends, addFriend } = useFriends();
     const userService = new UserService();
 
@@ -47,7 +49,7 @@ function SearchUsersScreen({ navigation }) {
         try {
             setIsSearching(true);
             const data = await userService.search(query);
-            setSearchResults(data);
+            setSearchResults(data.filter(user => user.id !== state.id));
         } catch (e) {
             console.error("Search error:", e);
         } finally {
