@@ -16,7 +16,8 @@ import {
 import { Image } from "expo-image";
 import * as Contacts from "expo-contacts";
 import { useUser } from "../../services/UserProvider";
-import theme from "../../theme/index";
+import { Users } from "lucide-react-native";
+import {friendTheme} from "../../theme/index";
 
 const CheckIcon = memo(() => <Text style={styles.checkmark}>✓</Text>);
 
@@ -34,7 +35,7 @@ const getInitials = name => {
     }
 };
 
-const ContactImage = memo(({ imageUri, name }) => (
+const ContactImage = memo(({ imageUri, name, isGroup }) => (
     <View style={styles.avatarContainer}>
         {imageUri ? (
             <Image
@@ -44,12 +45,17 @@ const ContactImage = memo(({ imageUri, name }) => (
                 cachePolicy="memory"
             />
         ) : (
-            <View style={styles.avatarFallback}>
-                <Text style={styles.avatarText}>{getInitials(name)}</Text>
+            <View style={[styles.avatarFallback, isGroup && styles.groupAvatarFallback]}>
+                {isGroup ? (
+                    <Users width={20} height={20} color="#6366F1" />
+                ) : (
+                    <Text style={styles.avatarText}>{getInitials(name)}</Text>
+                )}
             </View>
         )}
     </View>
 ));
+
 
 const SelectedAvatars = memo(({ selectedItems, onRemove }) => {
     if (!selectedItems?.length) return null;
@@ -112,10 +118,12 @@ const ContactItem = memo(({ item, onToggle, selectedTab }) => {
 
     return (
         <TouchableOpacity style={styles.contactItem} onPress={handlePress}>
-            <ContactImage
-                imageUri={selectedTab === "groups" ? item.groupImage : item.avatar}
-                name={item.name}
+            <ContactImage 
+                imageUri={selectedTab === "groups" ? item.groupImage : item.avatar} 
+                name={item.name} 
+                isGroup={selectedTab === "groups"} 
             />
+
             <View style={styles.contactInfo}>
                 <Text style={styles.contactName}>{item.name}</Text>
                 <Text style={styles.contactPhone}>
@@ -729,6 +737,9 @@ const styles = StyleSheet.create({
         backgroundColor: "#F0F0F0",
         justifyContent: "center",
         alignItems: "center",
+    },
+    groupAvatarFallback: {
+        backgroundColor: friendTheme.colors.indigo50, // or use friendTheme.colors.indigo50 if available
     },
     avatarText: {
         color: "#666666",
