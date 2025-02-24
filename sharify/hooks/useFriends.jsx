@@ -30,17 +30,18 @@ export function FriendsProvider({ children, initialFriends = [] }) {
 
     const prefetchFriends = async (friendData, frequests) => {
         const allAvatars = [
-            ...friendData.map(friend => friend.avatar).filter(avatar => avatar),
-            ...frequests.map(friend => friend.avatar).filter(avatar => avatar),
+            ...friendData.map(friend => friend.avatar).filter(avatar => avatar != null),
+            ...frequests.map(friend => friend.avatar).filter(avatar => avatar != null),
         ];
 
+        console.log(JSON.stringify(allAvatars, null, 2));
         try {
             await Promise.all(allAvatars.map(avatar => Image.prefetch(avatar)));
-            console.log('successfully fetched friends');
+            console.log("successfully fetched friends");
         } catch (error) {
             console.error(error);
         }
-    }
+    };
 
     const loadFriends = async id => {
         const [friendsData, friendRequests] = await Promise.all([

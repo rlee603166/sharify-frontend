@@ -27,8 +27,10 @@ export const UserProvider = ({ children }) => {
 
     const preLoadUser = async url => {
         try {
-            await Image.prefetch(url);
-            console.log("successfully fetched user pfp");
+            if (url && typeof url === "string" && url.startsWith("http")) {
+                await Image.prefetch(url);
+                console.log("successfully fetched user pfp");
+            }
         } catch (error) {
             console.error(error);
         }

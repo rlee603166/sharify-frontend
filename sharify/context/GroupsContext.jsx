@@ -28,9 +28,11 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
     }, []);
 
     const prefetchGroupsImage = async groupData => {
-        const data = [...groupData.map(group => group.groupImage).filter(groupImage => groupData)];
+        const data = groupData
+            .map(group => group.groupImage)
+            .filter(groupImage => groupImage != null);
         try {
-            await Promise.all(data.map(data => Image.prefetch(data)));
+            await Promise.all(data.map(group => Image.prefetch(group)));
             console.log("successfully fetched groups");
         } catch (error) {
             console.error(error);
