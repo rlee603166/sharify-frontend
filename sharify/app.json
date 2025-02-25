@@ -26,10 +26,10 @@
             }
           }
         },
-//        "NSCameraUsageDescription": "This app uses the camera to take photos.",
-//       "NSMicrophoneUsageDescription": "This app uses the microphone for videos.",
-//        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos to show contact profile pictures.",
-//      "ITSAppUsesNonExemptEncryption": false
+        "NSCameraUsageDescription": "This app uses the camera to take photos.",
+        "NSMicrophoneUsageDescription": "This app uses the microphone for videos.",
+        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos to show contact profile pictures.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
