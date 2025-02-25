@@ -30,6 +30,8 @@ function SearchUsersScreen({ navigation }) {
     const { friends, addFriend } = useFriends();
     const userService = new UserService();
 
+    console.log(userService.apiURL);
+
     useEffect(() => {
         debounceQuery(searchQuery);
     }, [searchQuery]);
@@ -49,7 +51,7 @@ function SearchUsersScreen({ navigation }) {
         try {
             setIsSearching(true);
             const data = await userService.search(query);
-            setSearchResults(data.filter(user => user.id !== state.id));
+            setSearchResults((data || []).filter(user => user.id !== state.id));
         } catch (e) {
             console.error("Search error:", e);
         } finally {

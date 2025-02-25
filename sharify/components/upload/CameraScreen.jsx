@@ -1,5 +1,5 @@
 // CameraView.js
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
@@ -15,28 +15,21 @@ const CameraScreen = ({ navigation, onPictureTaken }) => {
     const cameraRef = useRef(null);
     const { name, avatar } = useUser();
 
-    if (!permission || !galleryPermission) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <Text style={styles.text}>Loading permissions...</Text>
-            </SafeAreaView>
-        );
-    }
+    // Request permissions on component mount
+    useEffect(() => {
+        (async () => {
+            if (!permission?.granted) {
+                await requestPermission();
+            }
+            if (!galleryPermission?.granted) {
+                await requestGalleryPermission();
+            }
+        })();
+    }, []);
 
-    if (!permission.granted || !galleryPermission.granted) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <Text style={styles.text}>We need camera and gallery permissions</Text>
-                <TouchableOpacity
-                    onPress={async () => {
-                        await requestPermission();
-                        await requestGalleryPermission();
-                    }}
-                >
-                    <Text style={styles.text}>Grant Permissions</Text>
-                </TouchableOpacity>
-            </SafeAreaView>
-        );
+    // Show black screen while permissions are being checked or not granted
+    if (!permission || !galleryPermission || !permission.granted || !galleryPermission.granted) {
+        return <SafeAreaView style={styles.container} />;
     }
 
     const toggleCameraType = () => {
@@ -133,6 +126,7 @@ const CameraScreen = ({ navigation, onPictureTaken }) => {
     );
 };
 
+// Styles remain mostly the same
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -167,11 +161,6 @@ const styles = StyleSheet.create({
         marginTop: 10,
         marginLeft: 12,
     },
-    xButtonText: {
-        color: "white",
-        fontSize: 24,
-        marginTop: 2,
-    },
     topButtonText: {
         color: "white",
         fontSize: 10,
@@ -205,18 +194,6 @@ const styles = StyleSheet.create({
         borderColor: "white",
         alignItems: "center",
         justifyContent: "center",
-    },
-    captureButtonInner: {
-        width: 54,
-        height: 54,
-        borderRadius: 27,
-        backgroundColor: "white",
-    },
-    text: {
-        color: "white",
-        fontSize: 16,
-        textAlign: "center",
-        marginVertical: 10,
     },
 });
 

@@ -216,7 +216,10 @@ export function generateGroupMessage(id, processedReceipt, venmoUsername) {
     });
   
     // Closing prompt
-    message += `👉 Tap your link above to pay!`;
+    message += `👉 Tap your link above to pay!\n\n`;
+
+    message += `Download Sharify below!\n`;
+    message += 'https://apps.apple.com/app/id6742428429'
   
     return message;
   }

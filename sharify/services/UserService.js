@@ -247,7 +247,7 @@ class UserService {
         const response = await fetch(`${this.apiURL}/users/search/${query}`);
         const searchData = await response.json();
         console.log(searchData);
-        const data = searchData.map((friend, index) => {
+        const data = (searchData || []).map((friend, index) => {
             let isLocalImage;
             let isNull;
             if (friend.imageUri && friend.imageUri !== "null") {
@@ -261,7 +261,7 @@ class UserService {
             const avatar = isNull
                 ? null
                 : isLocalImage
-                  ? `${userService.apiURL}/images/pfp/${friend.imageUri}`
+                  ? `${this.apiURL}/images/pfp/${friend.imageUri}`
                   : friend.imageUri;
 
             console.log(avatar);
@@ -276,6 +276,8 @@ class UserService {
                 selected: false,
             };
         });
+
+        console.log(data);
         return data;
     }
 

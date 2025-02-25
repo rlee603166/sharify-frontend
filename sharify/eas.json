@@ -16,6 +16,12 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {      
+      "ios": {
+        "appleId": "developer.sharify@gmail.com",
+        "ascAppId": "6742428429",
+        "appleTeamId": "JG3ANZJHR6"
+      }
+    }
   }
 }

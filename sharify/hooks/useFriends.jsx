@@ -135,7 +135,9 @@ export function FriendsProvider({ children, initialFriends = [] }) {
 
     const updateFriendsList = async (id, setFriends) => {
         const friendsData = await userService.getFriends(id);
-        const transformedData = friendsData?.map(transformFriendData);
+        const transformedData = (Array.isArray(friendsData) ? friendsData : []).map(
+            transformFriendData
+        );
         setFriends(transformedData);
     };
 

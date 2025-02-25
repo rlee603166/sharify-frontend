@@ -17,10 +17,19 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.sharify.sharify",
       "infoPlist": {
-        "NSCameraUsageDescription": "This app uses the camera to take photos.",
-        "NSMicrophoneUsageDescription": "This app uses the microphone for videos.",
-        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos to show contact profile pictures.",
-        "ITSAppUsesNonExemptEncryption": false
+        "NSAppTransportSecurity": {
+          "NSExceptionDomains": {
+            "47.144.148.193": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSIncludesSubdomains": true,
+              "NSExceptionRequiresForwardSecrecy": false
+            }
+          }
+        },
+//        "NSCameraUsageDescription": "This app uses the camera to take photos.",
+//       "NSMicrophoneUsageDescription": "This app uses the microphone for videos.",
+//        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos to show contact profile pictures.",
+//      "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -36,8 +45,18 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_CONTACTS",
         "android.permission.WRITE_CONTACTS"
-      ]
+      ],
+      "package": "com.sharify.sharify"
     },
     "plugins": [
       [

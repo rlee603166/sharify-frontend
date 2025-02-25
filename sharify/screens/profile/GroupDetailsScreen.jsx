@@ -135,7 +135,7 @@ const GroupDetailsScreen = ({ navigation, route }) => {
     const groupId = route.params.group.id;
     const group = getGroupById(groupId);
 
-    const { id } = useUser();
+    const { id, avatar } = useUser();
 
     const [localGroupImage, setLocalGroupImage] = useState(group?.groupImage);
     const [showNameModal, setShowNameModal] = useState(false);
@@ -366,11 +366,18 @@ const GroupDetailsScreen = ({ navigation, route }) => {
                                             <View style={styles.leftContainer}>
                                                 {member &&
                                                     (member.avatar ? (
-                                                        <Image
-                                                            source={{ uri: member.avatar }}
-                                                            style={styles.avatar}
-                                                            transition={50}
-                                                        />
+                                                        member.id === "current-user" ? (
+                                                            <ProfileIcon
+                                                                avatar={avatar}
+                                                                size={48}
+                                                            />
+                                                        ) : (
+                                                            <Image
+                                                                source={{ uri: member.avatar }}
+                                                                style={styles.avatar}
+                                                                transition={50}
+                                                            />
+                                                        )
                                                     ) : (
                                                         <View style={styles.avatarPlaceholder}>
                                                             <ProfileIcon
