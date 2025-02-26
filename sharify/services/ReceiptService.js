@@ -1,18 +1,20 @@
 import FormData from "form-data";
+import { useUser } from "./UserProvider";
 
 class ReceiptService {
     constructor() {
         this.apiUrl = "http://47.144.148.193:8000/api/v1";
         // this.apiUrl = "http://127.0.0.1:8000/api/v1";
+        this.state = useUser();
     }
 
-    async upload(photoUri, user_id) {
+    async upload(photoUri) {
         try {
             const response = await fetch(photoUri);
             const blob = await response.blob();
 
             const formData = new FormData();
-            formData.append("user_id", user_id);
+            formData.append("user_id", parseInt(this.state.id));
             const fileExtension = photoUri.split(".").pop() || "jpg";
 
             formData.append("image", {

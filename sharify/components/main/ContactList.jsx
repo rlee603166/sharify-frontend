@@ -201,13 +201,11 @@ const ContactList = ({
 
                 if (data.length > 0) {
                     // Debug log raw contact data
-                    console.log("Raw contact data example:", data[0]);
 
                     const formattedContacts = data
                         .filter(contact => contact.name)
                         .map(contact => {
                             // Debug log each contact's phone numbers
-                            console.log(`Phone numbers for ${contact.name}:`, contact.phoneNumbers);
 
                             return {
                                 id: contact.id,
@@ -224,7 +222,6 @@ const ContactList = ({
                         })
                         .sort((a, b) => a.name.localeCompare(b.name));
 
-                    console.log("Formatted contact example:", formattedContacts[0]);
                     contactsRef.current = formattedContacts;
                     setContacts(formattedContacts);
                 }
@@ -300,19 +297,15 @@ const ContactList = ({
 
     const getAllSelectedItems = useCallback(() => {
         const selectedContacts = contacts.filter(item => item.selected) || [];
-        console.log("Selected contacts:", selectedContacts);
 
         const selectedFriends = friends.filter(item => item.selected) || [];
-        console.log("Selected friends:", selectedFriends);
 
         const selectedGroups = groups.filter(item => item.selected) || [];
-        console.log("Selected groups:", selectedGroups);
 
         const memberMap = new Map();
 
         // Add selected contacts
         selectedContacts.forEach(contact => {
-            console.log(`Processing contact ${contact.name}:`, contact);
             memberMap.set(contact.id, {
                 id: contact.id,
                 name: contact.name,
@@ -326,7 +319,6 @@ const ContactList = ({
         });
 
         selectedFriends.forEach(friend => {
-            console.log(`Processing friend ${friend.name}:`, friend);
             memberMap.set(friend.id, {
                 ...friend,
                 type: "friend"
@@ -334,7 +326,6 @@ const ContactList = ({
         });
 
         selectedGroups.forEach(group => {
-            console.log(`Processing group ${group.name}:`, group);
             group.members.forEach(member => {
                 if (member.id !== id) memberMap.set(member.id, {
                     ...member,
@@ -343,7 +334,6 @@ const ContactList = ({
             })
         });
         const result = Array.from(memberMap.values());
-        console.log("Final memberMap result:", result);
         return result;
     }, [contacts, friends, groups]);
 
@@ -448,31 +438,25 @@ const ContactList = ({
     const onNext = useCallback(() => {
         const uniqueMembersMap = new Map();
 
-        console.log("Processing groups...");
         groups
             .filter(g => g.selected)
             .flatMap(g => g.members || [])
             .filter(member => member.id !== id && member.id !== id)
             .forEach(member => {
-                console.log("Adding member:", member.id);
                 uniqueMembersMap.set(member.id, member);
             });
 
-        console.log("Processing friends...");
         friends
             .filter(f => f.selected)
             .filter(friend => friend.id !== id && friend.id !== id)
             .forEach(friend => {
-                console.log("Adding friend:", friend.id);
                 uniqueMembersMap.set(friend.id, friend);
             });
 
-        console.log("Processing contacts...");
         contacts
             .filter(c => c.selected) // Add this line to filter selected contacts
             .filter(contact => contact.id !== id && contact.id !== id)
             .forEach(contact => {
-                console.log("Adding contact:", contact.id);
                 uniqueMembersMap.set(contact.id, contact);
             });
 
@@ -483,7 +467,6 @@ const ContactList = ({
             uniqueMemberIds: Array.from(uniqueMembersMap.values()), // Use keys() for unique IDs
         };
 
-        console.log("Selected Data:", JSON.stringify(selectedData, null, 2));
 
         onSelectPeople(selectedData);
     }, [contacts, friends, groups, id, onSelectPeople]);

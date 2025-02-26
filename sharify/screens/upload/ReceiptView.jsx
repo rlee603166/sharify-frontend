@@ -160,8 +160,6 @@ const ReceiptView = ({
         if (selectedPeople && !localSelectedPeople) {
             setLocalSelectedPeople(selectedPeople);
             transformNames(selectedPeople);
-
-            console.log(`selectedPeople ${JSON.stringify(selectedPeople, null, 2)}`);
         }
     }, [selectedPeople]);
 
@@ -215,13 +213,8 @@ const ReceiptView = ({
     const transformNames = newUsers => {
         if (!newUsers || !newUsers.uniqueMemberIds) return;
 
-        console.log("Input newUsers:", JSON.stringify(newUsers, null, 2));
-        console.log("uniqueMemberIds:", newUsers.uniqueMemberIds);
-
         const users = [...newUsers.uniqueMemberIds];
         const newMembers = users.map(user => {
-            console.log(`Processing user ${user.name}:`, user);
-
             const member = {
                 id: user.id,
                 name: user.name,
@@ -232,11 +225,8 @@ const ReceiptView = ({
                 image: user.image,
             };
 
-            console.log(`Transformed member ${member.name}:`, member);
             return member;
         });
-
-        console.log("All transformed members:", newMembers);
 
         setGroup(prev => {
             const newGroup = {
@@ -252,7 +242,6 @@ const ReceiptView = ({
                     ...newMembers,
                 ],
             };
-            console.log("Final group:", newGroup);
             return newGroup;
         });
     };
@@ -411,7 +400,6 @@ const ReceiptView = ({
                         };
                     });
 
-                    console.log("Created peopleHashMap:", peopleMap); // Debug log
                     setPeopleHashMap(peopleMap);
                     onProcessed(result);
                 } catch (error) {

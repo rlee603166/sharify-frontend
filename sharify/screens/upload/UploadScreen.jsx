@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import PhotoReview from "./PhotoReviewScreen";
 import { View } from "react-native";
+import * as ImageManipulator from "expo-image-manipulator";
 
 import CameraScreen from "../../components/upload/CameraScreen";
 import ContactList from "../../components/main/ContactList";
@@ -23,7 +24,7 @@ const UploadScreen = ({ navigation }) => {
     const [processed, setProcessed] = useState({});
     const [peopleHashMap, setPeopleHashMap] = useState({});
     const [inputType, setInputType] = useState(null);
-    const [wrapperIsLoading, setWrapperIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [receiptID, setReceiptID] = useState(null);
     const receiptIDRef = useRef(null);
     const [apiData, setApiData] = useState({});
@@ -43,35 +44,52 @@ const UploadScreen = ({ navigation }) => {
     }, []);
 
     useEffect(() => {
-        if (ocrData && Array.isArray(ocrData.items)) {
-            setReceiptItems(ocrData.items);
-            const total = ocrData.items.reduce((sum, item) => {
-                const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                return sum + (isNaN(price) ? 0 : price);
-            }, 0);
-            setReceiptTotal(total);
-        }
-    }, [ocrData]);
+        console.log(`step: ${step}`);
+    }, [step]);
+
+    useEffect(() => {
+        console.log(`photo uri: ${photoUri}`);
+    }, [photoUri]);
+
+    useEffect(() => {
+        console.log(`receipt id: ${receiptID}`);
+    }, [receiptID]);
+
+    const optimizer = async uri => {
+        const optimized = await ImageManipulator.manipulateAsync(
+            uri,
+            [{ resize: { width: 800 } }],
+            { compress: 0.7, format: "jpeg" }
+        );
+
+        return optimized.uri;
+    };
+
+    const uploadReceipt = async uri => {
+        const optimizedUri = await optimizer(uri);
+        console.log(`optimized uri: ${optimizedUri}`);
+        const data = await receiptService.upload(optimizedUri);
+        console.log(`api response: ${JSON.stringify(data, null, 2)}`);
+        setReceiptID(data.receipt_id);
+    };
 
     const handlePictureTaken = (uri, type = "camera") => {
-        if (type === "manual") {
-            setInputType("manual");
-            console.log(JSON.stringify(friends, null, 2));
+        setInputType(type);
+        if (type == "manual") {
             setStep(2);
         } else {
-            setInputType("camera");
+            uploadReceipt(uri);
             setPhotoUri(uri);
             setStep(1);
         }
     };
 
     const handleBack = () => {
-        if (inputType === "manual") {
-            // For manual input, reset everything and return to the camera screen
-            handleRetake();
+        if (inputType == "manual") {
+            reset();
+            setStep(0);
             return;
         }
-    
         if (step === 3) {
             setReceiptItems(prevItems =>
                 prevItems.map(item => ({
@@ -83,47 +101,31 @@ const UploadScreen = ({ navigation }) => {
             setStep(2);
             return;
         }
-    
+
         setStep(1);
     };
-    
 
-    const resetFlow = () => {
+    const reset = () => {
+        setInputType(null);
         setPhotoUri(null);
-        setApiData(null);
         setReceiptID(null);
-        setOcrData(null);
-        setReceiptItems([]);      // Clear receipt items
-        setReceiptTotal(0);       // Reset total
-        setSelectedPeople(null);  // Clear selected people
-        setProcessed({});         // Clear processed result
-        setPeopleHashMap({});     // Clear people hash map
-    };    
-    
+        setReceiptItems([]);
+        setReceiptTotal(0);
+    };
 
-    const handleRetake = () => {
-        resetFlow();
+    const onRetake = () => {
+        reset();
         setStep(0);
     };
 
-    const handleAcceptPhoto = async () => {
-        try {
-            setStep(2);
-            const data = await receiptService.upload(photoUri, id);
-            setReceiptID(data.receipt_id);
-            receiptIDRef.current = data.receipt_id;
-            setApiData(data);
-        } catch (error) {
-            console.log(error);
-            setStep(0);
-        }
+    const onAccept = () => {
+        setStep(2);
     };
 
     const handleSelectPeople = async (selectedItems, isUpdate = false) => {
-        setWrapperIsLoading(true);
+        setIsLoading(true);
 
         if (!isUpdate) {
-            // Full reset only when coming from initial user selection screen
             setReceiptItems(prevItems =>
                 prevItems.map(item => ({
                     ...item,
@@ -132,12 +134,9 @@ const UploadScreen = ({ navigation }) => {
                 }))
             );
         } else {
-            // For updates from edit button, only remove assignments for removed users
             const newUserIds = new Set(selectedItems.uniqueMemberIds.map(member => member.id));
-
             setReceiptItems(prevItems =>
                 prevItems.map(item => {
-                    // Filter out assignments for users that are no longer selected
                     const updatedPeople = (item.people || []).filter(person =>
                         newUserIds.has(person.id)
                     );
@@ -156,56 +155,76 @@ const UploadScreen = ({ navigation }) => {
         if (!isUpdate) {
             if (inputType === "manual") {
                 setStep(3);
-                setWrapperIsLoading(false);
-                return;
+                setIsLoading(false);
+                return true;
             }
 
             setStep(3);
-            let waitAttempts = 0;
-            const maxWaitAttempts = 10;
-
-            while (!receiptIDRef.current && waitAttempts < maxWaitAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-                waitAttempts++;
-            }
-
-            const currentReceiptID = receiptIDRef.current;
-            if (!currentReceiptID) {
-                console.error("No receipt ID available for polling");
-                setWrapperIsLoading(false);
-                return;
-            }
 
             const MAX_ATTEMPTS = 10;
-            const POLLING_INTERVAL = 2000;
-            let attempts = 0;
+            const INTERVAL = 1000;
+            let pollingAttempts = 0;
+            let pollingTimeout;
 
-            while (attempts < MAX_ATTEMPTS) {
-                try {
-                    const data = await receiptService.fetchReceipt(currentReceiptID);
-                    if (data && data.status === "completed") {
-                        setOcrData(data.processed_data);
-                        setWrapperIsLoading(false);
-                        return;
-                    }
-                    attempts++;
-                    await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
-                } catch (error) {
-                    console.error(`Polling error (attempt ${attempts + 1}):`, error);
-                    if (attempts === MAX_ATTEMPTS - 1) {
-                        alert("Receipt processing failed. Please try again.");
-                        setWrapperIsLoading(false);
-                        return;
-                    }
-                    attempts++;
-                    await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
+            const pollReceipt = async () => {
+                if (pollingAttempts >= MAX_ATTEMPTS) {
+                    setIsLoading(false);
+                    alert(
+                        "Receipt processing is taking longer than expected. Please try again later."
+                    );
+                    return;
                 }
-            }
 
-            setWrapperIsLoading(false);
-            alert("Receipt processing is taking longer than expected. Please try again later.");
+                try {
+                    if (!receiptID) {
+                        pollingAttempts++;
+                        pollingTimeout = setTimeout(pollReceipt, INTERVAL);
+                        return;
+                    }
+
+                    console.log(`fetching receipt: ${receiptID}`);
+                    const data = await receiptService.fetchReceipt(receiptID);
+
+                    if (data && data.status === "completed") {
+                        console.log(`data: ${JSON.stringify(data, null, 2)}`);
+                        const receiptData = data.processed_data;
+                        console.log(JSON.stringify(receiptData, null, 2));
+                        setReceiptItems(receiptData.items);
+                        const total = receiptData.items.reduce((sum, item) => {
+                            const price =
+                                typeof item.price === "string"
+                                    ? parseFloat(item.price)
+                                    : item.price;
+                            return sum + (isNaN(price) ? 0 : price);
+                        }, 0);
+                        setReceiptTotal(total);
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    pollingAttempts++;
+                    pollingTimeout = setTimeout(pollReceipt, INTERVAL);
+                } catch (error) {
+                    console.error(`Polling error (attempt ${pollingAttempts + 1}):`, error);
+                    if (pollingAttempts === MAX_ATTEMPTS - 1) {
+                        alert("Receipt processing failed. Please try again.");
+                        setIsLoading(false);
+                        return;
+                    }
+                    pollingAttempts++;
+                    pollingTimeout = setTimeout(pollReceipt, INTERVAL);
+                }
+            };
+
+            pollReceipt();
+
+            return () => {
+                if (pollingTimeout) {
+                    clearTimeout(pollingTimeout);
+                }
+            };
         } else {
-            setWrapperIsLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -224,63 +243,49 @@ const UploadScreen = ({ navigation }) => {
             case 0:
                 return <CameraScreen navigation={navigation} onPictureTaken={handlePictureTaken} />;
             case 1:
-                return (
-                    <PhotoReview
-                        photoUri={photoUri}
-                        onRetake={handleRetake}
-                        onAccept={handleAcceptPhoto}
-                    />
-                );
+                return <PhotoReview photoUri={photoUri} onRetake={onRetake} onAccept={onAccept} />;
             case 2:
                 return (
-                    <LoadingWrapper isLoading={wrapperIsLoading}>
-                        <ContactList
-                            setStep={setStep}
-                            onSelectPeople={items => handleSelectPeople(items, false)}
-                            type="Next"
-                            handleBack={handleBack}
-                            fetchedFriends={friends}
-                            fetchedGroups={groups}
-                            groupData={
-                                // If selectedPeople is an array, that means only contacts/friends were selected.
-                                // Wrap it in an object with empty groups/friends/uniqueMemberIds.
-                                Array.isArray(selectedPeople)
+                    <ContactList
+                        setStep={setStep}
+                        onSelectPeople={items => handleSelectPeople(items, false)}
+                        type="Next"
+                        handleBack={handleBack}
+                        fetchedFriends={friends}
+                        fetchedGroups={groups}
+                        groupData={
+                            Array.isArray(selectedPeople)
                                 ? { uniqueMemberIds: [], friends: selectedPeople, groups: [] }
                                 : selectedPeople
-                            }
-                        /> 
-                    </LoadingWrapper>
+                        }
+                    />
                 );
             case 3:
                 return (
-                    <LoadingWrapper isLoading={wrapperIsLoading}>
-                        <ReceiptView
-                            navigation={navigation}
-                            setStep={handleBack}
-                            onProcessed={handleSplitBill} // This now correctly sets step to 4
-                            selectedPeople={selectedPeople}
-                            photoUri={photoUri}
-                            ocrData={{
-                                items: receiptItems,
-                                subtotal: receiptTotal,
-                            }}
-                            setPeopleHashMap={setPeopleHashMap}
-                            onUpdatePeople={items => handleSelectPeople(items, true)}
-                            onUpdateReceipt={handleReceiptUpdate}
-                            initialTotal={receiptTotal}
-                        />
-                    </LoadingWrapper>
+                    <ReceiptView
+                        navigation={navigation}
+                        setStep={handleBack}
+                        onProcessed={handleSplitBill}
+                        selectedPeople={selectedPeople}
+                        photoUri={photoUri}
+                        ocrData={{
+                            items: receiptItems,
+                            subtotal: receiptTotal,
+                        }}
+                        setPeopleHashMap={setPeopleHashMap}
+                        onUpdatePeople={items => handleSelectPeople(items, true)}
+                        onUpdateReceipt={handleReceiptUpdate}
+                        initialTotal={receiptTotal}
+                    />
                 );
             case 4:
                 return (
                     <ReviewWrapper
                         setStep={newStep => {
-                            // Only allow specific step transitions from review
                             if (newStep === 3) {
-                                setStep(3); // Allow going back to ReceiptView
+                                setStep(3);
                             } else if (newStep === 0) {
-                                // Reset the entire flow
-                                resetFlow();
+                                reset();
                                 setStep(0);
                             }
                         }}
@@ -294,7 +299,11 @@ const UploadScreen = ({ navigation }) => {
         }
     };
 
-    return <View style={{ flex: 1 }}>{renderStep()}</View>;
+    return (
+        <View style={{ flex: 1 }}>
+            <LoadingWrapper isLoading={isLoading}>{renderStep()}</LoadingWrapper>
+        </View>
+    );
 };
 
 export default UploadScreen;
