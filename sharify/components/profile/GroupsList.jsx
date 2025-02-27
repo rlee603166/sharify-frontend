@@ -29,7 +29,7 @@ const GroupsList = ({ navigation }) => {
 
             {groups.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Users width={40} height={40} color={profileTheme.colors.gray300} />
+                    <Users width={40} height={40} color="#007FFF" />
                     <Text style={styles.emptyText}>No groups yet</Text>
                     <Text style={styles.emptySubtext}>
                         Create a group to start splitting bills with friends

@@ -247,7 +247,8 @@ export const UserProvider = ({ children }) => {
 
     const refreshAccessToken = async refreshToken => {
         try {
-            const response = await fetch(`${apiURL}/auth/refresh`, {
+            const username = await SecureStore.getItemAsync("username");
+            const response = await fetch(`${apiURL}/auth/refresh/${username}`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${refreshToken}`,

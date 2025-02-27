@@ -21,6 +21,7 @@ import { useUser } from "../../services/UserProvider";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import ProfileIcon from "../../components/main/ProfileIcon";
+import { useFocusEffect } from "@react-navigation/native";
 
 // Helper function to get two-letter initials from a name
 const getInitials = name => {
@@ -131,23 +132,80 @@ const GroupDetailsScreen = ({ navigation, route }) => {
         deleteGroup,
         updateGroupName,
         getGroupById,
+        loadGroups,
     } = useGroups();
-    const groupId = route.params.group.id;
-    const group = getGroupById(groupId);
+
+    const groupId = route.params?.group?.id;
+    const [group, setGroup] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const { id, avatar } = useUser();
 
-    const [localGroupImage, setLocalGroupImage] = useState(group?.groupImage);
+    const [localGroupImage, setLocalGroupImage] = useState(null);
     const [showNameModal, setShowNameModal] = useState(false);
     const [showOptionsMenu, setShowOptionsMenu] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
+    // This effect will run when the component mounts or when groupId changes
     useEffect(() => {
-        setLocalGroupImage(group?.groupImage);
-    }, [group?.groupImage]);
+        if (groupId) {
+            const fetchedGroup = getGroupById(groupId);
+            setGroup(fetchedGroup);
+            setLocalGroupImage(fetchedGroup?.groupImage);
+        }
+        setLoading(false);
+    }, [groupId, getGroupById]);
+
+    // This effect refreshes the group data when the screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            if (groupId) {
+                const fetchedGroup = getGroupById(groupId);
+                setGroup(fetchedGroup);
+                setLocalGroupImage(fetchedGroup?.groupImage);
+            }
+            setLoading(false);
+
+            return () => {
+                // Clean up function if needed
+            };
+        }, [groupId, groups])
+    );
+
+    // Fallback if no group is found
+    useEffect(() => {
+        if (!loading && !group && groupId) {
+            // Try to reload groups from the server
+            loadGroups(id).then(() => {
+                const fetchedGroup = getGroupById(groupId);
+                setGroup(fetchedGroup);
+                setLocalGroupImage(fetchedGroup?.groupImage);
+            });
+        }
+    }, [loading, group, groupId, id]);
+
+    // If we still don't have a group and we're not loading, redirect back
+    useEffect(() => {
+        if (!loading && !group && groupId) {
+            // Wait a bit to see if the group loads
+            const timer = setTimeout(() => {
+                if (!getGroupById(groupId)) {
+                    Alert.alert("Group Not Found", "The group could not be loaded.", [
+                        { text: "OK", onPress: () => navigation.goBack() },
+                    ]);
+                }
+            }, 1000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [loading, group, groupId, navigation]);
+
+    if (!groupId) {
+        navigation.goBack();
+        return null;
+    }
 
     const loggedInUser = group?.members?.find(member => member.id === id);
-
     const updatedMembers = group?.members?.filter(member => member.id !== id);
 
     const currentUser = loggedInUser
@@ -158,11 +216,11 @@ const GroupDetailsScreen = ({ navigation, route }) => {
               avatar: loggedInUser.avatar,
           }
         : null;
-    const allMembers = [currentUser, ...(updatedMembers || [])];
+    const allMembers = currentUser ? [currentUser, ...(updatedMembers || [])] : [];
 
     const handleUpdateGroupName = useCallback(
         newName => {
-            if (newName.trim()) {
+            if (newName.trim() && group) {
                 updateGroupName(group.id, newName.trim());
             }
         },
@@ -170,7 +228,7 @@ const GroupDetailsScreen = ({ navigation, route }) => {
     );
 
     const pickImage = async () => {
-        if (isLoading) return;
+        if (isLoading || !group) return;
 
         try {
             setIsLoading(true);
@@ -203,7 +261,7 @@ const GroupDetailsScreen = ({ navigation, route }) => {
     };
 
     const handleRemoveImage = async () => {
-        if (isLoading) return;
+        if (isLoading || !group) return;
 
         Alert.alert("Remove Photo", "Are you sure you want to remove the group photo?", [
             {
@@ -230,6 +288,8 @@ const GroupDetailsScreen = ({ navigation, route }) => {
     };
 
     const handleDeleteGroup = () => {
+        if (!group) return;
+
         Alert.alert("Leave Group", "Are you sure you want to leave this group?", [
             {
                 text: "Cancel",
@@ -247,6 +307,8 @@ const GroupDetailsScreen = ({ navigation, route }) => {
     };
 
     const openImageOptions = async () => {
+        if (!group) return;
+
         setShowOptionsMenu(false);
 
         try {
@@ -275,61 +337,66 @@ const GroupDetailsScreen = ({ navigation, route }) => {
         }
     };
 
-    const optionsMenuItems = [
-        {
-            text: "Edit Group Name",
-            onPress: () => setShowNameModal(true),
-        },
-        {
-            text: localGroupImage ? "Change Group Photo" : "Add Group Photo",
-            onPress: openImageOptions,
-        },
-        ...(localGroupImage
-            ? [
-                  {
-                      text: "Remove Photo",
-                      onPress: handleRemoveImage,
-                      destructive: true,
-                  },
-              ]
-            : []),
-        {
-            text: "Leave Group",
-            onPress: handleDeleteGroup,
-            destructive: true,
-        },
-    ];
+    const optionsMenuItems = !group
+        ? []
+        : [
+              {
+                  text: "Edit Group Name",
+                  onPress: () => setShowNameModal(true),
+              },
+              {
+                  text: localGroupImage ? "Change Group Photo" : "Add Group Photo",
+                  onPress: openImageOptions,
+              },
+              ...(localGroupImage
+                  ? [
+                        {
+                            text: "Remove Photo",
+                            onPress: handleRemoveImage,
+                            destructive: true,
+                        },
+                    ]
+                  : []),
+              {
+                  text: "Leave Group",
+                  onPress: handleDeleteGroup,
+                  destructive: true,
+              },
+          ];
 
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" />
             <View style={styles.container}>
-                {group ? (
-                    <>
-                        <View style={styles.header}>
-                            <TouchableOpacity
-                                style={styles.backButton}
-                                onPress={() => navigation.goBack()}
-                            >
-                                <ArrowLeft
-                                    width={24}
-                                    height={24}
-                                    color={friendTheme.colors.gray600}
-                                />
-                            </TouchableOpacity>
-                            <Text style={styles.headerTitle}>Group Info</Text>
-                            <TouchableOpacity
-                                style={styles.backButton}
-                                onPress={() => setShowOptionsMenu(true)}
-                            >
-                                <MoreVertical
-                                    width={24}
-                                    height={24}
-                                    color={friendTheme.colors.gray600}
-                                />
-                            </TouchableOpacity>
-                        </View>
+                <View style={styles.header}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                        <ArrowLeft width={24} height={24} color={friendTheme.colors.gray600} />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Group Info</Text>
+                    {group && (
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            onPress={() => setShowOptionsMenu(true)}
+                        >
+                            <MoreVertical
+                                width={24}
+                                height={24}
+                                color={friendTheme.colors.gray600}
+                            />
+                        </TouchableOpacity>
+                    )}
+                    {!group && <View style={styles.backButton} />}
+                </View>
 
+                {!group ? (
+                    <ScrollView contentContainerStyle={styles.emptyStateContainer}>
+                        <View style={styles.emptyStateIcon}>
+                            <Users width={50} height={50} color={friendTheme.colors.gray300} />
+                        </View>
+                        <Text style={styles.emptyStateText}>Refreshing group information...</Text>
+                    </ScrollView>
+                ) : (
+                    <>
                         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                             <View style={styles.imageSection}>
                                 <View style={styles.imageContainer}>
@@ -364,28 +431,26 @@ const GroupDetailsScreen = ({ navigation, route }) => {
                                     {allMembers.map(member => (
                                         <View key={member.id} style={styles.userItem}>
                                             <View style={styles.leftContainer}>
-                                                {member &&
-                                                    (member.avatar ? (
-                                                        member.id === "current-user" ? (
+                                                {member.avatar ? (
+                                                    member.id === "current-user" ? (
+                                                        <View style={styles.avatarContainer}>
                                                             <ProfileIcon
-                                                                avatar={avatar}
-                                                                size={48}
-                                                            />
-                                                        ) : (
-                                                            <Image
-                                                                source={{ uri: member.avatar }}
-                                                                style={styles.avatar}
-                                                                transition={50}
-                                                            />
-                                                        )
-                                                    ) : (
-                                                        <View style={styles.avatarPlaceholder}>
-                                                            <ProfileIcon
-                                                                name={member.name}
+                                                                avatar={member.avatar || avatar}
                                                                 size={48}
                                                             />
                                                         </View>
-                                                    ))}
+                                                    ) : (
+                                                        <Image
+                                                            source={{ uri: member.avatar }}
+                                                            style={styles.avatar}
+                                                            transition={50}
+                                                        />
+                                                    )
+                                                ) : (
+                                                    <View style={styles.avatarPlaceholder}>
+                                                        <ProfileIcon name={member.name} size={48} />
+                                                    </View>
+                                                )}
                                                 <View style={styles.userInfo}>
                                                     <Text style={styles.userName}>
                                                         {member && member.name}
@@ -420,10 +485,6 @@ const GroupDetailsScreen = ({ navigation, route }) => {
                             options={optionsMenuItems}
                         />
                     </>
-                ) : (
-                    <View style={styles.container}>
-                        <Text style={styles.loadingText}>Loading group details...</Text>
-                    </View>
                 )}
             </View>
         </SafeAreaView>
@@ -537,6 +598,9 @@ const styles = StyleSheet.create({
         backgroundColor: profileTheme.colors.gray[100],
         alignItems: "center",
         justifyContent: "center",
+        marginRight: friendTheme.spacing[3],
+    },
+    avatarContainer: {
         marginRight: friendTheme.spacing[3],
     },
     userInfo: {
@@ -656,11 +720,22 @@ const styles = StyleSheet.create({
         color: friendTheme.colors.gray900,
         paddingVertical: 16,
     },
-    loadingText: {
-        fontSize: 18,
+    emptyStateContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    emptyStateIcon: {
+        marginBottom: 16,
+        padding: 20,
+        borderRadius: 50,
+        backgroundColor: friendTheme.colors.gray50,
+    },
+    emptyStateText: {
+        fontSize: 16,
+        color: friendTheme.colors.gray600,
         textAlign: "center",
-        marginTop: 20,
-        color: friendTheme.colors.gray900,
     },
 });
 

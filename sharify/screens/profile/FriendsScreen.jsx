@@ -134,7 +134,7 @@ export default function FriendsScreen({ navigation }) {
                         </>
                     ) : (
                         <View style={styles.emptyContainer}>
-                            <Users width={40} height={40} color={friendTheme.colors.gray300} />
+                            <Users width={40} height={40} color="#007FFF" />
                             <Text style={styles.emptyText}>No friends yet</Text>
                             <Text style={styles.emptySubtext}>
                                 Add friends to start splitting bills and sharing expenses

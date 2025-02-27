@@ -85,7 +85,7 @@ const FriendsSummary = ({ navigation }) => {
                     </View>
                 ) : (
                     <View style={styles.emptyStateContainer}>
-                        <Users width={32} height={32} color={profileTheme.colors.gray300} />
+                        <Users width={32} height={32} color="#007FFF" />
                         <View style={styles.emptyTextContainer}>
                             <Text style={styles.emptyTitle}>No friends yet</Text>
                             <Text style={styles.emptySubtext}>

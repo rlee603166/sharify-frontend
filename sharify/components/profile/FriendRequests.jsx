@@ -66,7 +66,7 @@ const FriendRequests = () => {
                     </View>
                 ) : (
                     <View style={styles.emptyStateContainer}>
-                        <UserPlus width={32} height={32} color={profileTheme.colors.gray300} />
+                        <UserPlus width={32} height={32} color="#007FFF" />
                         <View style={styles.emptyTextContainer}>
                             <Text style={styles.emptyTitle}>No friend requests</Text>
                             <Text style={styles.emptySubtext}>

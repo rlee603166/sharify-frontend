@@ -11,18 +11,20 @@ import {
     StatusBar,
     Image,
     Alert,
+    ActivityIndicator,
 } from "react-native";
 import { X, Check, Users, Trash2 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { friendTheme } from "../../theme";
 import { useFriends } from "../../hooks/useFriends";
 import { useGroups } from "../../context/GroupsContext";
-import ProfileIcon from "../../components/main/ProfileIcon"; // Newly added import
+import ProfileIcon from "../../components/main/ProfileIcon";
 
 const CreateGroupScreen = ({ navigation }) => {
     const [groupName, setGroupName] = useState("");
     const [selectedFriends, setSelectedFriends] = useState([]);
     const [groupImage, setGroupImage] = useState(null);
+    const [isCreating, setIsCreating] = useState(false);
     const { friends } = useFriends();
     const { createGroup } = useGroups();
 
@@ -69,19 +71,47 @@ const CreateGroupScreen = ({ navigation }) => {
         ]);
     };
 
-    const handleCreateGroup = () => {
-        if (createGroup(groupName, selectedFriends, groupImage)) {
-            navigation.goBack();
+    const handleCreateGroup = async () => {
+        if (!groupName.trim()) {
+            Alert.alert("Error", "Please enter a group name");
+            return;
+        }
+
+        if (selectedFriends.length === 0) {
+            Alert.alert("Error", "Please select at least one friend");
+            return;
+        }
+
+        try {
+            setIsCreating(true);
+            
+            // Call createGroup and wait for it to complete
+            const success = await createGroup(groupName, selectedFriends, groupImage);
+            
+            if (success) {
+                // Only navigate back if the group was successfully created
+                navigation.goBack();
+            }
+        } catch (error) {
+            console.error("Error creating group:", error);
+            Alert.alert(
+                "Error",
+                "There was a problem creating your group. Please try again."
+            );
+        } finally {
+            setIsCreating(false);
         }
     };
 
     const toggleFriendSelection = friend => {
         setSelectedFriends(prev =>
-            prev.includes(friend) ? prev.filter(f => f.id !== friend.id) : [...prev, friend]
+            prev.some(f => f.id === friend.id) 
+                ? prev.filter(f => f.id !== friend.id) 
+                : [...prev, friend]
         );
     };
 
-    const isSelected = friend => selectedFriends.includes(friend);
+    const isSelected = friend => selectedFriends.some(f => f.id === friend.id);
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -92,6 +122,7 @@ const CreateGroupScreen = ({ navigation }) => {
                     <TouchableOpacity
                         style={styles.closeButton}
                         onPress={() => navigation.goBack()}
+                        disabled={isCreating}
                     >
                         <X width={24} height={24} color={friendTheme.colors.gray600} />
                     </TouchableOpacity>
@@ -99,7 +130,11 @@ const CreateGroupScreen = ({ navigation }) => {
 
                 <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                     <View style={styles.imageSection}>
-                        <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
+                        <TouchableOpacity 
+                            style={styles.imageContainer} 
+                            onPress={pickImage}
+                            disabled={isCreating}
+                        >
                             {groupImage ? (
                                 <Image source={{ uri: groupImage }} style={styles.groupImage} />
                             ) : (
@@ -119,6 +154,7 @@ const CreateGroupScreen = ({ navigation }) => {
                             <TouchableOpacity
                                 style={styles.removePhotoButton}
                                 onPress={removeImage}
+                                disabled={isCreating}
                             >
                                 <Trash2 size={16} color={friendTheme.colors.red500} />
                                 <Text style={styles.removePhotoText}>Remove Photo</Text>
@@ -134,6 +170,7 @@ const CreateGroupScreen = ({ navigation }) => {
                             onChangeText={setGroupName}
                             placeholder="Enter group name"
                             placeholderTextColor={friendTheme.colors.gray400}
+                            editable={!isCreating}
                         />
                     </View>
 
@@ -146,6 +183,7 @@ const CreateGroupScreen = ({ navigation }) => {
                                 key={friend.id}
                                 style={styles.friendItem}
                                 onPress={() => toggleFriendSelection(friend)}
+                                disabled={isCreating}
                             >
                                 <View style={styles.leftContainer}>
                                     {friend.avatar ? (
@@ -183,13 +221,17 @@ const CreateGroupScreen = ({ navigation }) => {
                     <TouchableOpacity
                         style={[
                             styles.createButton,
-                            (!groupName.trim() || selectedFriends.length === 0) &&
+                            (isCreating || !groupName.trim() || selectedFriends.length === 0) &&
                                 styles.createButtonDisabled,
                         ]}
                         onPress={handleCreateGroup}
-                        disabled={!groupName.trim() || selectedFriends.length === 0}
+                        disabled={isCreating || !groupName.trim() || selectedFriends.length === 0}
                     >
-                        <Text style={styles.createButtonText}>Create Group</Text>
+                        {isCreating ? (
+                            <ActivityIndicator color={friendTheme.colors.white} />
+                        ) : (
+                            <Text style={styles.createButtonText}>Create Group</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>

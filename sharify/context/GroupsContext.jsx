@@ -1,5 +1,5 @@
 // src/context/GroupsContext.js
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
 import UserService from "../services/UserService";
 import { useUser } from "../services/UserProvider";
 import { Alert } from "react-native";
@@ -12,7 +12,8 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
     const [groups, setGroups] = useState(() =>
         [...initialGroups].sort((a, b) => a.name.localeCompare(b.name))
     );
-
+    const [isLoading, setIsLoading] = useState(false);
+    
     const userService = new UserService();
     const { id, name, username, profileImage } = useUser();
 
@@ -24,8 +25,10 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
     };
 
     useEffect(() => {
-        loadGroups(id);
-    }, []);
+        if (id) {
+            loadGroups(id);
+        }
+    }, [id]);
 
     const prefetchGroupsImage = async groupData => {
         const data = (groupData || [])
@@ -39,9 +42,12 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
         }
     };
 
-    const loadGroups = async id => {
+    const loadGroups = useCallback(async (userId) => {
+        if (!userId) return;
+        
+        setIsLoading(true);
         try {
-            const groupsData = await userService.getGroups(id);
+            const groupsData = await userService.getGroups(userId);
 
             console.log("groupsData:", groupsData, "Type:", typeof groupsData);
 
@@ -94,27 +100,38 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
             prefetchGroupsImage(sortedData);
         } catch (error) {
             console.error("Failed to load groups:", error);
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, [userService, id]);
 
     const createGroup = async (name, selectedFriends, groupImage = null) => {
         if (!name.trim()) {
             Alert.alert("Error", "Please enter a group name");
             return false;
         }
-
+    
         if (selectedFriends.length === 0) {
             Alert.alert("Error", "Please select at least one friend");
             return false;
         }
-
+    
         if (groups.some(group => group.name.toLowerCase() === name.toLowerCase())) {
             Alert.alert("Error", "A group with this name already exists");
             return false;
         }
-
-        const tempId = -Math.random();
-
+    
+        setIsLoading(true);
+        
+        // Use a real temp id (negative integer) not random
+        const tempId = Date.now() * -1;
+    
+        // Ensure current user avatar is properly formatted and matches what ProfileIcon expects
+        let avatarUrl = user.avatar;
+        if (avatarUrl && !avatarUrl.startsWith('http') && avatarUrl !== null) {
+            avatarUrl = `${userService.apiURL}/images/pfp/${avatarUrl}`;
+        }
+    
         const newGroup = {
             id: tempId,
             name: name.trim(),
@@ -130,20 +147,40 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
                     username: user.username.trim().startsWith("@")
                         ? user.username.trim().slice(1)
                         : user.username.trim(),
+                    avatar: avatarUrl, // Use consistently formatted avatar URL
                 },
             ],
             groupImage: groupImage,
         };
-
-        console.log(JSON.stringify(newGroup, null, 2));
-
+    
+        // Prefetch the current user's avatar
+        if (avatarUrl) {
+            try {
+                await Image.prefetch(avatarUrl);
+                console.log("User avatar prefetched for group");
+            } catch (err) {
+                console.log("Avatar prefetch error:", err);
+            }
+        }
+    
+        console.log("Creating new group:", JSON.stringify(newGroup, null, 2));
+    
+        // First add the temp group to state
         setGroups(prevGroups =>
             [...prevGroups, newGroup].sort((a, b) => a.name.localeCompare(b.name))
         );
-
+    
         try {
+            // Then make the API call
             const createdGroup = await userService.createGroup(newGroup);
-
+            
+            if (!createdGroup || !createdGroup.group_id) {
+                throw new Error("Failed to get group ID from server");
+            }
+    
+            console.log("Group created successfully with ID:", createdGroup.group_id);
+    
+            // Update the group with the real ID
             setGroups(prevGroups =>
                 prevGroups
                     .map(group =>
@@ -151,16 +188,22 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
                     )
                     .sort((a, b) => a.name.localeCompare(b.name))
             );
-
-            return true;
+    
+            setIsLoading(false);
+            return createdGroup.group_id; // Return the real ID
         } catch (error) {
             console.error("Failed to create group:", error);
+            
+            // Remove the temp group from state
+            setGroups(prevGroups => prevGroups.filter(group => group.id !== tempId));
+            
             Alert.alert("Error", "Failed to create group. Please try again.");
+            setIsLoading(false);
             return false;
         }
     };
 
-    const updateGroupName = (groupId, newName) => {
+    const updateGroupName = async (groupId, newName) => {
         if (!newName.trim()) {
             Alert.alert("Error", "Group name cannot be empty");
             return false;
@@ -175,56 +218,86 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
             return false;
         }
 
+        // Update locally first
         setGroups(prevGroups =>
             prevGroups
                 .map(group => (group.id === groupId ? { ...group, name: newName.trim() } : group))
                 .sort((a, b) => a.name.localeCompare(b.name))
         );
 
-        const data = userService.updateGroupName(groupId, newName);
-        return true;
+        try {
+            // Then update on the server
+            await userService.updateGroupName(groupId, newName);
+            return true;
+        } catch (error) {
+            console.error("Failed to update group name:", error);
+            
+            // Reload groups to reset state on error
+            loadGroups(id);
+            return false;
+        }
     };
 
-    const updateGroupImage = (groupId, imageUri) => {
+    const updateGroupImage = async (groupId, imageUri) => {
+        // Update locally first
         setGroups(prevGroups =>
             prevGroups.map(group =>
                 group.id === groupId ? { ...group, groupImage: imageUri } : group
             )
         );
+        
         try {
-            const photo = userService.updateGroupImage(groupId, imageUri);
+            // Then update on the server
+            await userService.updateGroupImage(groupId, imageUri);
             return true;
         } catch (error) {
-            console.error("Failed to create group:", error);
-            Alert.alert("Error", "Failed to create group. Please try again.");
+            console.error("Failed to update group image:", error);
+            
+            // Reload groups to reset state on error
+            loadGroups(id);
             return false;
         }
     };
 
-    const removeGroupImage = groupId => {
+    const removeGroupImage = async (groupId) => {
+        // Update locally first
         setGroups(prevGroups =>
             prevGroups.map(group => (group.id === groupId ? { ...group, groupImage: null } : group))
         );
 
         try {
-            const photo = userService.updateGroupImage(groupId, null);
+            // Then update on the server
+            await userService.updateGroupImage(groupId, null);
             return true;
         } catch (error) {
-            console.error("Failed to create group:", error);
-            Alert.alert("Error", "Failed to create group. Please try again.");
+            console.error("Failed to remove group image:", error);
+            
+            // Reload groups to reset state on error
+            loadGroups(id);
             return false;
         }
     };
 
-    const deleteGroup = groupId => {
+    const deleteGroup = async (groupId) => {
+        // Store the group to restore it if the API call fails
+        const groupToDelete = groups.find(group => group.id === groupId);
+        
+        // Update locally first
         setGroups(prevGroups => prevGroups.filter(group => group.id !== groupId));
 
         try {
-            const photo = userService.deleteGroup(groupId);
+            // Then update on the server
+            await userService.deleteGroup(groupId);
             return true;
         } catch (error) {
-            console.error("Failed to create group:", error);
-            Alert.alert("Error", "Failed to create group. Please try again.");
+            console.error("Failed to delete group:", error);
+            
+            // Restore the group if the API call failed
+            if (groupToDelete) {
+                setGroups(prev => [...prev, groupToDelete].sort((a, b) => a.name.localeCompare(b.name)));
+            }
+            
+            Alert.alert("Error", "Failed to leave the group. Please try again.");
             return false;
         }
     };
@@ -244,7 +317,7 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
         );
     };
 
-    const updateGroupLastActive = groupId => {
+    const updateGroupLastActive = (groupId) => {
         setGroups(prevGroups =>
             prevGroups.map(group =>
                 group.id === groupId ? { ...group, lastActive: new Date().toISOString() } : group
@@ -252,14 +325,16 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
         );
     };
 
-    const getGroupById = groupId => {
-        return groups.find(group => group.id === groupId);
-    };
+    const getGroupById = useCallback((groupId) => {
+        if (!groupId) return null;
+        return groups.find(group => group.id === groupId) || null;
+    }, [groups]);
 
     return (
         <GroupsContext.Provider
             value={{
                 groups,
+                isLoading,
                 loadGroups,
                 createGroup,
                 deleteGroup,

@@ -56,13 +56,12 @@ const UploadScreen = ({ navigation }) => {
     }, [receiptID]);
 
     const optimizer = async uri => {
-        const optimized = await ImageManipulator.manipulateAsync(
+        const result = await ImageManipulator.manipulateAsync(
             uri,
-            [{ resize: { width: 800 } }],
-            { compress: 0.7, format: "jpeg" }
+            [{ resize: { width: 750 } }],
+            { compress: 0.9, format: "webp" }
         );
-
-        return optimized.uri;
+        return result.uri;
     };
 
     const uploadReceipt = async uri => {
@@ -161,7 +160,7 @@ const UploadScreen = ({ navigation }) => {
 
             setStep(3);
 
-            const MAX_ATTEMPTS = 10;
+            const MAX_ATTEMPTS = 15;
             const INTERVAL = 1000;
             let pollingAttempts = 0;
             let pollingTimeout;
