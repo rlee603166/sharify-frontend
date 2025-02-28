@@ -7,7 +7,6 @@ const useGPT = () => {
     const gptInstance = useRef(null);
 
     useEffect(() => {
-        // Initialize the GPT instance once
         if (!gptInstance.current) {
             gptInstance.current = new GPT();
         }

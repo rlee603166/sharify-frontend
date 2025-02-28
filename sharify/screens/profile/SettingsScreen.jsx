@@ -1,5 +1,6 @@
 import React from "react";
 import {
+    Alert,
     View,
     Text,
     StyleSheet,
@@ -7,8 +8,6 @@ import {
     SafeAreaView,
     Platform,
     StatusBar,
-    ScrollView,
-    Alert,
 } from "react-native";
 import { X, Camera, Trash2, LogOut } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -18,13 +17,14 @@ import { Image } from "expo-image";
 
 const SettingsScreen = ({ navigation }) => {
     const {
-        username, // Coming from your auth state
-        phone, // Coming from your auth state
-        name, // Default "Alex Johnson" in your state
+        username,
+        phone,
+        name,
         avatar,
         updateProfileImage,
         removeProfileImage,
         logout,
+        deleteAccount,
     } = useUser();
 
     console.log("SettingsScreen rendered with username:", username);
@@ -80,10 +80,29 @@ const SettingsScreen = ({ navigation }) => {
         ]);
     };
 
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            "Delete Account",
+            "Are you sure you want to delete your account? This action cannot be undone.",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => deleteAccount(),
+                },
+            ]
+        );
+    };
+
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" />
             <View style={styles.container}>
+                {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Settings</Text>
                     <TouchableOpacity
@@ -94,7 +113,9 @@ const SettingsScreen = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
 
-                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                {/* Content */}
+                <View style={styles.content}>
+                    {/* Profile Image Section */}
                     <View style={styles.imageSection}>
                         <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
                             {avatar ? (
@@ -117,29 +138,46 @@ const SettingsScreen = ({ navigation }) => {
                         )}
                     </View>
 
-                    <Text style={styles.sectionTitle}>Account</Text>
-                    <View style={styles.sectionContent}>
-                        <View style={styles.settingsItem}>
-                            <Text style={styles.settingsItemLabel}>Name</Text>
-                            <Text style={styles.settingsItemValue}>{name}</Text>
-                        </View>
-                        <View style={styles.settingsItem}>
-                            <Text style={styles.settingsItemLabel}>Username</Text>
-                            <Text style={styles.settingsItemValue}>{`@${username}` || "Not set"}</Text>
-                        </View>
-                        <View style={styles.settingsItem}>
-                            <Text style={styles.settingsItemLabel}>Phone</Text>
-                            <Text style={styles.settingsItemValue}>{`(${phone.slice(0,3)}) ${phone.slice(3,6)}-${phone.slice(6,10)}` || "Not set"}</Text>
+                    {/* Account Section */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Account</Text>
+                        <View style={styles.sectionContent}>
+                            <View style={styles.settingsItem}>
+                                <Text style={styles.settingsItemLabel}>Name</Text>
+                                <Text style={styles.settingsItemValue}>{name}</Text>
+                            </View>
+                            <View style={styles.settingsItem}>
+                                <Text style={styles.settingsItemLabel}>Username</Text>
+                                <Text style={styles.settingsItemValue}>
+                                    {`@${username}` || "Not set"}
+                                </Text>
+                            </View>
+                            <View style={styles.settingsItem}>
+                                <Text style={styles.settingsItemLabel}>Phone</Text>
+                                <Text style={styles.settingsItemValue}>
+                                    {`(${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6, 10)}` ||
+                                        "Not set"}
+                                </Text>
+                            </View>
                         </View>
                     </View>
 
-                    <View style={styles.divider} />
+                    {/* Log Out and Delete Account Buttons */}
+                    <View style={styles.actionsSection}>
+                        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                            <LogOut size={20} color={profileTheme.colors.red} />
+                            <Text style={styles.logoutText}>Log Out</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                        <LogOut size={20} color={profileTheme.colors.red} />
-                        <Text style={styles.logoutText}>Log Out</Text>
-                    </TouchableOpacity>
-                </ScrollView>
+                        <TouchableOpacity
+                            style={styles.deleteAccountButton}
+                            onPress={handleDeleteAccount}
+                        >
+                            <Trash2 size={20} color={profileTheme.colors.red} />
+                            <Text style={styles.deleteAccountText}>Delete Account</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -153,12 +191,12 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
+        paddingHorizontal: profileTheme.spacing.lg,
     },
     header: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        paddingHorizontal: profileTheme.spacing.lg,
         paddingVertical: profileTheme.spacing.md,
         borderBottomWidth: 1,
         borderBottomColor: profileTheme.colors.gray[50],
@@ -173,10 +211,11 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
+        justifyContent: "space-between", // Distribute space evenly
     },
     imageSection: {
         alignItems: "center",
-        paddingVertical: profileTheme.spacing.xl,
+        marginTop: profileTheme.spacing.xl,
     },
     imageContainer: {
         alignItems: "center",
@@ -218,17 +257,17 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "500",
     },
+    section: {
+        marginTop: profileTheme.spacing.xl,
+    },
     sectionTitle: {
         fontSize: 14,
         fontWeight: "500",
         color: profileTheme.colors.secondary,
-        marginTop: profileTheme.spacing.lg,
         marginBottom: profileTheme.spacing.sm,
-        marginHorizontal: profileTheme.spacing.lg,
     },
     sectionContent: {
         backgroundColor: profileTheme.colors.background,
-        paddingHorizontal: profileTheme.spacing.lg,
     },
     settingsItem: {
         paddingVertical: profileTheme.spacing.md,
@@ -245,10 +284,8 @@ const styles = StyleSheet.create({
         color: profileTheme.colors.text,
         fontWeight: "500",
     },
-    divider: {
-        height: 8,
-        backgroundColor: profileTheme.colors.gray[50],
-        marginVertical: profileTheme.spacing.xl,
+    actionsSection: {
+        marginBottom: profileTheme.spacing.xl,
     },
     logoutButton: {
         flexDirection: "row",
@@ -257,6 +294,18 @@ const styles = StyleSheet.create({
         paddingVertical: profileTheme.spacing.lg,
     },
     logoutText: {
+        color: profileTheme.colors.red,
+        fontSize: 16,
+        fontWeight: "500",
+        marginLeft: profileTheme.spacing.sm,
+    },
+    deleteAccountButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: profileTheme.spacing.lg,
+    },
+    deleteAccountText: {
         color: profileTheme.colors.red,
         fontSize: 16,
         fontWeight: "500",

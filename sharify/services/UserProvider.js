@@ -176,9 +176,9 @@ export const UserProvider = ({ children }) => {
                 return;
             }
 
-            console.log('fetching refresh tokens');
+            console.log("fetching refresh tokens");
             const newTokens = await refreshAccessToken(refreshToken);
-            console.log(`newTokens: ${JSON.stringify(newTokens, null ,2)}`);
+            console.log(`newTokens: ${JSON.stringify(newTokens, null, 2)}`);
 
             if (newTokens) {
                 await loadUserData(newTokens.access_token);
@@ -403,6 +403,25 @@ export const UserProvider = ({ children }) => {
         }
     };
 
+    const deleteAccount = async () => {
+        try {
+            const url = `${apiURL}/users/me`
+            const accessToken = await SecureStore.getItemAsync("access_token");
+            const response = await fetch(url, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${accessToken.trim()}`,
+                },
+            });
+
+            const data = await response.json();
+            console.log(JSON.stringify(data, null, 2));
+            logout();
+        } catch (error) {
+            console.error("Deleting failed: ", error);
+        }
+    };
+
     const load = async () => {
         try {
             const accessToken = await SecureStore.getItemAsync("access_token");
@@ -416,6 +435,7 @@ export const UserProvider = ({ children }) => {
         login,
         logout,
         register,
+        deleteAccount,
         requestVerificationCode,
         refreshAccessToken,
         validateAccessToken,
