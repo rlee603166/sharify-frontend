@@ -26,9 +26,9 @@
             }
           }
         },
-        "NSCameraUsageDescription": "This app uses the camera to take photos.",
-        "NSMicrophoneUsageDescription": "This app uses the microphone for videos.",
-        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos to show contact profile pictures.",
+        "NSCameraUsageDescription": "The app uses your camera to capture receipt images for automatic itemization and bill splitting.",
+        "NSPhotoLibraryUsageDescription": "The app uses your photo library to import receipt images for automatic itemization and bill splitting.",
+        "NSContactsUsageDescription": "The app uses your contacts so you can easily add friends for shared bill splitting.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -62,21 +62,21 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
+          "cameraPermission": "The app uses your camera to capture receipt images for automatic itemization and bill splitting."
         }
       ],
       [
         "expo-media-library",
         {
-          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
-          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save photos."
+          "photosPermission": "The app uses your photo library to import receipt images for automatic itemization and bill splitting.",
+          "savePhotosPermission": "The app uses your photos for automatic itemization and bill splitting."
         }
       ],
       [
         "expo-contacts",
         {
-          "contactsPermission": "Allow $(PRODUCT_NAME) to access your contacts.",
-          "contactsPhotoPermission": "Allow $(PRODUCT_NAME) to access your contacts photos."
+          "contactsPermission": "The app uses your contacts so you can easily add friends for shared bill splitting.",
+          "contactsPhotoPermission": "The app uses your contacts photos so you can easily identify your friends."
         }
       ],
       "expo-secure-store"

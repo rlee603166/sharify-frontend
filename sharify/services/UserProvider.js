@@ -176,7 +176,9 @@ export const UserProvider = ({ children }) => {
                 return;
             }
 
+            console.log('fetching refresh tokens');
             const newTokens = await refreshAccessToken(refreshToken);
+            console.log(`newTokens: ${JSON.stringify(newTokens, null ,2)}`);
 
             if (newTokens) {
                 await loadUserData(newTokens.access_token);
@@ -261,6 +263,7 @@ export const UserProvider = ({ children }) => {
             }
 
             const data = await response.json();
+            console.log(JSON.stringify(data, null, 2));
 
             await SecureStore.setItemAsync("access_token", data.access_token);
             await SecureStore.setItemAsync("refresh_token", data.refresh_token);

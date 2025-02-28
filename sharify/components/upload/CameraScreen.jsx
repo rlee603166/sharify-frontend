@@ -1,4 +1,4 @@
-// CameraView.js
+// CameraScreen.js
 import React, { useState, useRef, useEffect } from "react";
 import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -27,16 +27,17 @@ const CameraScreen = ({ navigation, onPictureTaken }) => {
         })();
     }, []);
 
-    // Show black screen while permissions are being checked or not granted
-    if (!permission || !galleryPermission || !permission.granted || !galleryPermission.granted) {
-        return <SafeAreaView style={styles.container} />;
-    }
+    // Handle permissions independently
+    const hasCameraPermission = permission?.granted;
+    const hasGalleryPermission = galleryPermission?.granted;
 
     const toggleCameraType = () => {
+        if (!hasCameraPermission) return;
         setFacing(current => (current === "back" ? "front" : "back"));
     };
 
     const toggleFlash = () => {
+        if (!hasCameraPermission) return;
         setFlash(current => (current === "off" ? "on" : "off"));
     };
 
@@ -48,7 +49,7 @@ const CameraScreen = ({ navigation, onPictureTaken }) => {
     };
 
     const handleCapture = async () => {
-        if (!cameraRef.current) return;
+        if (!hasCameraPermission || !cameraRef.current) return;
 
         try {
             const photo = await cameraRef.current.takePictureAsync({
@@ -67,6 +68,8 @@ const CameraScreen = ({ navigation, onPictureTaken }) => {
     };
 
     const handleGalleryPick = async () => {
+        if (!hasGalleryPermission) return;
+
         try {
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ["images"],
@@ -81,52 +84,106 @@ const CameraScreen = ({ navigation, onPictureTaken }) => {
         }
     };
 
+    // UI Controls - rendered regardless of permissions
+    const renderControls = () => (
+        <>
+            {/* Top Controls */}
+            <SafeAreaView style={styles.topControls}>
+                <TouchableOpacity
+                    style={styles.profileButton}
+                    onPress={() => navigation.navigate("Profile")}
+                >
+                    <ProfileIcon name={name} avatar={avatar} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.topButton}
+                    onPress={toggleFlash}
+                    disabled={!hasCameraPermission}
+                >
+                    <Flashlight {...getFlashIcon()} />
+                </TouchableOpacity>
+            </SafeAreaView>
+
+            {/* Bottom Controls */}
+            <View style={styles.controls}>
+                <TouchableOpacity
+                    style={[styles.sideButton, !hasGalleryPermission && styles.disabledButtonText]}
+                    onPress={handleGalleryPick}
+                    disabled={!hasGalleryPermission}
+                >
+                    <ImageIcon
+                        color={hasGalleryPermission ? "white" : "rgba(255, 255, 255, 0.5)"}
+                        size={24}
+                    />
+                    <Text
+                        style={[
+                            styles.buttonText,
+                            !hasGalleryPermission && styles.disabledButtonText,
+                        ]}
+                    >
+                        Gallery
+                    </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.captureButton, !hasCameraPermission && styles.disabledButton]}
+                    onPress={handleCapture}
+                    activeOpacity={hasCameraPermission ? 0.7 : 1}
+                    disabled={!hasCameraPermission}
+                ></TouchableOpacity>
+
+                <TouchableOpacity style={styles.sideButton} onPress={handleManualInput}>
+                    <PenLine color="white" size={22} />
+                    <Text style={styles.topButtonText}>Manual</Text>
+                </TouchableOpacity>
+            </View>
+        </>
+    );
+
+    // Use a state to track initial rendering
+    const [isInitializing, setIsInitializing] = useState(true);
+
+    // Use an effect to handle initialization state
+    useEffect(() => {
+        // Longer timeout to ensure consistent behavior in TestFlight/production
+        const timer = setTimeout(() => {
+            setIsInitializing(false);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
         <View style={styles.container}>
-            <CameraView
-                ref={cameraRef}
-                style={styles.camera}
-                facing={facing}
-                flash={flash}
-                enableTorch={flash === "on"}
-            >
-                {/* Top Controls */}
-                <SafeAreaView style={styles.topControls}>
-                    <TouchableOpacity
-                        style={styles.profileButton}
-                        onPress={() => navigation.navigate("Profile")}
-                    >
-                        <ProfileIcon name={name} avatar={avatar} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.topButton} onPress={toggleFlash}>
-                        <Flashlight {...getFlashIcon()} />
-                    </TouchableOpacity>
-                </SafeAreaView>
-
-                {/* Bottom Controls */}
-                <View style={styles.controls}>
-                    <TouchableOpacity style={styles.sideButton} onPress={handleGalleryPick}>
-                        <ImageIcon color="white" size={24} />
-                        <Text style={styles.buttonText}>Gallery</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.captureButton}
-                        onPress={handleCapture}
-                        activeOpacity={0.7}
-                    ></TouchableOpacity>
-
-                    <TouchableOpacity style={styles.sideButton} onPress={handleManualInput}>
-                        <PenLine color="white" size={22} />
-                        <Text style={styles.topButtonText}>Manual</Text>
-                    </TouchableOpacity>
+            {hasCameraPermission ? (
+                <CameraView
+                    ref={cameraRef}
+                    style={styles.camera}
+                    facing={facing}
+                    flash={flash}
+                    enableTorch={flash === "on"}
+                >
+                    {renderControls()}
+                </CameraView>
+            ) : (
+                // Render a black background with controls when camera permission not granted
+                <View style={styles.noPermissionContainer}>
+                    {renderControls()}
+                    {/* Only show permission messages after initialization */}
+                    {!isInitializing && (
+                        <>
+                            <Text style={styles.permissionText}>Camera access denied</Text>
+                            {!hasGalleryPermission && (
+                                <Text style={styles.permissionText}>Gallery access denied</Text>
+                            )}
+                        </>
+                    )}
                 </View>
-            </CameraView>
+            )}
         </View>
     );
 };
 
-// Styles remain mostly the same
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -134,6 +191,21 @@ const styles = StyleSheet.create({
     },
     camera: {
         flex: 1,
+    },
+    noPermissionContainer: {
+        flex: 1,
+        backgroundColor: "black",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    permissionText: {
+        color: "white",
+        fontSize: 16,
+        textAlign: "center",
+        marginBottom: 8,
+    },
+    disabledButtonText: {
+        color: "rgba(255, 255, 255, 0.5)",
     },
     topControls: {
         position: "absolute",
@@ -144,6 +216,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         padding: 20,
         marginHorizontal: 20,
+        zIndex: 10,
     },
     topButton: {
         width: 50,
@@ -175,6 +248,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-around",
         paddingHorizontal: 20,
+        zIndex: 10,
     },
     sideButton: {
         alignItems: "center",
@@ -194,6 +268,9 @@ const styles = StyleSheet.create({
         borderColor: "white",
         alignItems: "center",
         justifyContent: "center",
+    },
+    disabledButton: {
+        borderColor: "rgba(255, 255, 255, 0.5)",
     },
 });
 

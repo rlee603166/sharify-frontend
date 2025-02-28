@@ -97,7 +97,7 @@ const OptionsMenu = ({ visible, onClose, options }) => {
                                 ]}
                                 onPress={() => {
                                     onClose();
-                                    setTimeout(() => option.onPress(), 300);
+                                    setTimeout(() => option.onPress(), 500);
                                 }}
                             >
                                 {option.icon && (
