@@ -219,7 +219,7 @@ export function generateGroupMessage(id, processedReceipt, venmoUsername) {
     message += `👉 Tap your link above to pay!\n\n`;
 
     message += `🚀 Download Sharify below!\n`;
-    message += 'https://apps.apple.com/app/id6742428429'
+    message += 'https://apps.apple.com/us/app/sharify-split-smart-pay-fast/id6742428429';
   
     return message;
   }

@@ -150,6 +150,7 @@ export const UserProvider = ({ children }) => {
         try {
             const accessToken = await SecureStore.getItemAsync("access_token");
             const refreshToken = await SecureStore.getItemAsync("refresh_token");
+            console.log(`refresh: ${JSON.stringify(refreshToken, null, 2)}`);
             const username = await loadStoredUsername();
 
             console.log("Stored credentials:", {
@@ -162,7 +163,7 @@ export const UserProvider = ({ children }) => {
                 console.log("No tokens found, setting initial state");
                 setState(prev => ({
                     ...prev,
-                    username: prev.username || username, // Keep existing username if available
+                    username: prev.username || username,
                     isLoading: false,
                 }));
                 return;
@@ -241,7 +242,12 @@ export const UserProvider = ({ children }) => {
             const response = await fetch(`${apiURL}/auth/validate-access`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            return response.ok;
+
+            const data = await response.json();
+
+            if (data.status === "success") return true;
+
+            return false;
         } catch (error) {
             return false;
         }
@@ -250,7 +256,7 @@ export const UserProvider = ({ children }) => {
     const refreshAccessToken = async refreshToken => {
         try {
             const username = await SecureStore.getItemAsync("username");
-            const response = await fetch(`${apiURL}/auth/refresh/${username}`, {
+            const response = await fetch(`${apiURL}/auth/refresh?username=${username}`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${refreshToken}`,
@@ -405,7 +411,7 @@ export const UserProvider = ({ children }) => {
 
     const deleteAccount = async () => {
         try {
-            const url = `${apiURL}/users/me`
+            const url = `${apiURL}/users/me`;
             const accessToken = await SecureStore.getItemAsync("access_token");
             const response = await fetch(url, {
                 method: "DELETE",
