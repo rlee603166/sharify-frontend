@@ -13,7 +13,7 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
         [...initialGroups].sort((a, b) => a.name.localeCompare(b.name))
     );
     const [isLoading, setIsLoading] = useState(false);
-    
+
     const userService = new UserService();
     const { id, name, username, profileImage } = useUser();
 
@@ -42,96 +42,100 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
         }
     };
 
-    const loadGroups = useCallback(async (userId) => {
-        if (!userId) return;
-        
-        setIsLoading(true);
-        try {
-            const groupsData = await userService.getGroups(userId);
+    const loadGroups = useCallback(
+        async userId => {
+            if (!userId) return;
 
-            console.log("groupsData:", groupsData, "Type:", typeof groupsData);
+            setIsLoading(true);
+            try {
+                const groupsData = await userService.getGroups(userId);
 
-            const data = Array.isArray(groupsData)
-                ? groupsData.map(group => {
-                      const members = Array.isArray(group.members)
-                          ? group.members.map(member => {
-                                if (member.users && typeof member.users === "object") {
-                                    let isLocalImage;
-                                    if (member.users.imageUri) {
-                                        isLocalImage = !member.users.imageUri.startsWith("http");
+                console.log("groupsData:", groupsData, "Type:", typeof groupsData);
+
+                const data = Array.isArray(groupsData)
+                    ? groupsData.map(group => {
+                          const members = Array.isArray(group.members)
+                              ? group.members.map(member => {
+                                    if (member.users && typeof member.users === "object") {
+                                        let isLocalImage;
+                                        if (member.users.imageUri) {
+                                            isLocalImage =
+                                                !member.users.imageUri.startsWith("http");
+                                        }
+
+                                        const avatar = isLocalImage
+                                            ? `${userService.apiURL}/images/pfp/${member.users.imageUri}`
+                                            : member.users.imageUri;
+
+                                        return {
+                                            id: member.user_id,
+                                            name: member.users.name || "",
+                                            username: member.users.username || "",
+                                            phone: member.users.phone || "",
+                                            avatar: avatar || null,
+                                        };
+                                    } else {
+                                        return {
+                                            id: member.user_id || "",
+                                            name: "",
+                                            username: "",
+                                            phone: "",
+                                            avatar: null,
+                                        };
                                     }
+                                })
+                              : [];
 
-                                    const avatar = isLocalImage
-                                        ? `${userService.apiURL}/images/pfp/${member.users.imageUri}`
-                                        : member.users.imageUri;
+                          return {
+                              id: group.group_id,
+                              name: group.name || "",
+                              groupImage: group.imageUri
+                                  ? `${userService.apiURL}/images/groups/${group.imageUri}`
+                                  : null,
+                              members: members,
+                          };
+                      })
+                    : [];
 
-                                    return {
-                                        id: member.user_id,
-                                        name: member.users.name || "",
-                                        username: member.users.username || "",
-                                        phone: member.users.phone || "",
-                                        avatar: avatar || null,
-                                    };
-                                } else {
-                                    return {
-                                        id: member.user_id || "",
-                                        name: "",
-                                        username: "",
-                                        phone: "",
-                                        avatar: null,
-                                    };
-                                }
-                            })
-                          : []; 
-
-                      return {
-                          id: group.group_id,
-                          name: group.name || "",
-                          groupImage: group.imageUri
-                              ? `${userService.apiURL}/images/groups/${group.imageUri}`
-                              : null,
-                          members: members,
-                      };
-                  })
-                : []; 
-
-            const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
-            setGroups(sortedData);
-            prefetchGroupsImage(sortedData);
-        } catch (error) {
-            console.error("Failed to load groups:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [userService, id]);
+                const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+                setGroups(sortedData);
+                prefetchGroupsImage(sortedData);
+            } catch (error) {
+                console.error("Failed to load groups:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [userService, id]
+    );
 
     const createGroup = async (name, selectedFriends, groupImage = null) => {
         if (!name.trim()) {
             Alert.alert("Error", "Please enter a group name");
             return false;
         }
-    
+
         if (selectedFriends.length === 0) {
             Alert.alert("Error", "Please select at least one friend");
             return false;
         }
-    
+
         if (groups.some(group => group.name.toLowerCase() === name.toLowerCase())) {
             Alert.alert("Error", "A group with this name already exists");
             return false;
         }
-    
+
         setIsLoading(true);
-        
+
         // Use a real temp id (negative integer) not random
         const tempId = Date.now() * -1;
-    
+
         // Ensure current user avatar is properly formatted and matches what ProfileIcon expects
         let avatarUrl = user.avatar;
-        if (avatarUrl && !avatarUrl.startsWith('http') && avatarUrl !== null) {
+        if (avatarUrl && !avatarUrl.startsWith("http") && avatarUrl !== null) {
             avatarUrl = `${userService.apiURL}/images/pfp/${avatarUrl}`;
         }
-    
+
         const newGroup = {
             id: tempId,
             name: name.trim(),
@@ -152,7 +156,7 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
             ],
             groupImage: groupImage,
         };
-    
+
         // Prefetch the current user's avatar
         if (avatarUrl) {
             try {
@@ -162,24 +166,24 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
                 console.log("Avatar prefetch error:", err);
             }
         }
-    
+
         console.log("Creating new group:", JSON.stringify(newGroup, null, 2));
-    
+
         // First add the temp group to state
         setGroups(prevGroups =>
             [...prevGroups, newGroup].sort((a, b) => a.name.localeCompare(b.name))
         );
-    
+
         try {
             // Then make the API call
             const createdGroup = await userService.createGroup(newGroup);
-            
+
             if (!createdGroup || !createdGroup.group_id) {
                 throw new Error("Failed to get group ID from server");
             }
-    
+
             console.log("Group created successfully with ID:", createdGroup.group_id);
-    
+
             // Update the group with the real ID
             setGroups(prevGroups =>
                 prevGroups
@@ -188,15 +192,15 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
                     )
                     .sort((a, b) => a.name.localeCompare(b.name))
             );
-    
+
             setIsLoading(false);
             return createdGroup.group_id; // Return the real ID
         } catch (error) {
             console.error("Failed to create group:", error);
-            
+
             // Remove the temp group from state
             setGroups(prevGroups => prevGroups.filter(group => group.id !== tempId));
-            
+
             Alert.alert("Error", "Failed to create group. Please try again.");
             setIsLoading(false);
             return false;
@@ -231,7 +235,7 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
             return true;
         } catch (error) {
             console.error("Failed to update group name:", error);
-            
+
             // Reload groups to reset state on error
             loadGroups(id);
             return false;
@@ -245,21 +249,21 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
                 group.id === groupId ? { ...group, groupImage: imageUri } : group
             )
         );
-        
+
         try {
             // Then update on the server
             await userService.updateGroupImage(groupId, imageUri);
             return true;
         } catch (error) {
             console.error("Failed to update group image:", error);
-            
+
             // Reload groups to reset state on error
             loadGroups(id);
             return false;
         }
     };
 
-    const removeGroupImage = async (groupId) => {
+    const removeGroupImage = async groupId => {
         // Update locally first
         setGroups(prevGroups =>
             prevGroups.map(group => (group.id === groupId ? { ...group, groupImage: null } : group))
@@ -271,17 +275,17 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
             return true;
         } catch (error) {
             console.error("Failed to remove group image:", error);
-            
+
             // Reload groups to reset state on error
             loadGroups(id);
             return false;
         }
     };
 
-    const deleteGroup = async (groupId) => {
+    const deleteGroup = async groupId => {
         // Store the group to restore it if the API call fails
         const groupToDelete = groups.find(group => group.id === groupId);
-        
+
         // Update locally first
         setGroups(prevGroups => prevGroups.filter(group => group.id !== groupId));
 
@@ -291,12 +295,14 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
             return true;
         } catch (error) {
             console.error("Failed to delete group:", error);
-            
+
             // Restore the group if the API call failed
             if (groupToDelete) {
-                setGroups(prev => [...prev, groupToDelete].sort((a, b) => a.name.localeCompare(b.name)));
+                setGroups(prev =>
+                    [...prev, groupToDelete].sort((a, b) => a.name.localeCompare(b.name))
+                );
             }
-            
+
             Alert.alert("Error", "Failed to leave the group. Please try again.");
             return false;
         }
@@ -317,7 +323,7 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
         );
     };
 
-    const updateGroupLastActive = (groupId) => {
+    const updateGroupLastActive = groupId => {
         setGroups(prevGroups =>
             prevGroups.map(group =>
                 group.id === groupId ? { ...group, lastActive: new Date().toISOString() } : group
@@ -325,10 +331,13 @@ const GroupsProvider = ({ children, initialGroups = [] }) => {
         );
     };
 
-    const getGroupById = useCallback((groupId) => {
-        if (!groupId) return null;
-        return groups.find(group => group.id === groupId) || null;
-    }, [groups]);
+    const getGroupById = useCallback(
+        groupId => {
+            if (!groupId) return null;
+            return groups.find(group => group.id === groupId) || null;
+        },
+        [groups]
+    );
 
     return (
         <GroupsContext.Provider

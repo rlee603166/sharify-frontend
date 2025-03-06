@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as SecureStore from "expo-secure-store";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
@@ -36,6 +37,23 @@ export const UserProvider = ({ children }) => {
         }
     };
 
+    const compressor = async uri => {
+        try {
+            const result = await ImageManipulator.manipulateAsync(
+                uri,
+                [{ resize: { width: 750 } }],
+                {
+                    compress: 0.9,
+                    format: "webp",
+                }
+            );
+            return result.uri;
+        } catch (error) {
+            console.error("Image compression failed:", error);
+            return uri;
+        }
+    };
+
     const updateProfileImage = async imageUri => {
         setState(prev => ({
             ...prev,
@@ -43,7 +61,8 @@ export const UserProvider = ({ children }) => {
         }));
 
         try {
-            const response = await fetch(imageUri);
+            const compressed = await compressor(imageUri);
+            const response = await fetch(compressed);
             const blob = await response.blob();
 
             const formData = new FormData();

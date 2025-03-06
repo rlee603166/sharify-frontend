@@ -1,4 +1,5 @@
 import FormData from "form-data";
+import * as ImageManipulator from "expo-image-manipulator";
 import { useUser } from "./UserProvider";
 
 class UserService {
@@ -116,7 +117,8 @@ class UserService {
 
     async uploadGroupImage(photoUri) {
         try {
-            const response = await fetch(photoUri);
+            const uri = await this.compressor(photoUri)
+            const response = await fetch(uri);
             const blob = await response.blob();
 
             const formData = new FormData();
@@ -145,7 +147,8 @@ class UserService {
         try {
             let filepath = null;
             if (photoUri) {
-                filepath = await this.uploadGroupImage(photoUri);
+                const uri = await this.compressor(photoUri);
+                filepath = await this.uploadGroupImage(uri);
             }
 
             const url = `${this.apiURL}/groups/${group_id}`;
@@ -166,11 +169,29 @@ class UserService {
         }
     }
 
+    async compressor(uri) {
+        try {
+            const result = await ImageManipulator.manipulateAsync(
+                uri,
+                [{ resize: { width: 750 } }],
+                {
+                    compress: 0.9,
+                    format: "webp",
+                }
+            );
+            return result.uri;
+        } catch (error) {
+            console.error("Image compression failed:", error);
+            return uri; // Fallback to the original URI if compression fails
+        }
+    }
+
     async createGroup(data) {
         try {
+            const uri = await this.compressor(data.groupImage);
             const formattedGroup = {
                 group_name: data.name,
-                imageUri: data.groupImage,
+                imageUri: uri,
                 members: data.members.map(member => ({
                     user_id: member.id,
                 })),
