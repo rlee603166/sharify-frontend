@@ -9,7 +9,7 @@ import {
     SafeAreaView,
     StatusBar,
 } from "react-native";
-import UsernameInput from "../../components/auth/UsernameInput";
+import PhoneInputView from "../../components/auth/PhoneInput";
 import SMSVerificationView from "../../components/auth/SMSVerificationView";
 
 import { useUser } from "../../services/UserProvider";
@@ -22,16 +22,20 @@ const LoginScreen = ({ navigation }) => {
 
     const { requestVerificationCode, login } = useUser();
 
-    const handleUsername = async username => {
+    const handlePhoneNumber = async phoneNumber => {
         try {
-            const data = await requestVerificationCode(username);
-            if (data.status !== "verification_sent") return;
+            const data = await requestVerificationCode(phoneNumber);
+            console.log(`data: ${JSON.stringify(data, null, 2)}`);
+
+            if (data.status !== "verification_sent") return false;
 
             setUser({
-                username: username,
+                username: data.username,
                 phone: data.phone_number,
             });
             setStep(1);
+
+            return true;
         } catch {}
     };
 
@@ -52,7 +56,7 @@ const LoginScreen = ({ navigation }) => {
     const render = () => {
         switch (step) {
             case 0:
-                return <UsernameInput onSubmit={handleUsername} prompt={prompt} />;
+                return <PhoneInputView handlePhoneNumber={handlePhoneNumber} isLogin={true} />
             case 1:
                 return <SMSVerificationView phone={user.phone} onNext={handleSMS} />;
             default:

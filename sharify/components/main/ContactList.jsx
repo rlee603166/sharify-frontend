@@ -15,9 +15,9 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import * as Contacts from "expo-contacts";
+import { friendTheme } from "../../theme/index";
 import { useUser } from "../../services/UserProvider";
 import { Users } from "lucide-react-native";
-import {friendTheme} from "../../theme/index";
 
 const CheckIcon = memo(() => <Text style={styles.checkmark}>✓</Text>);
 
@@ -55,7 +55,6 @@ const ContactImage = memo(({ imageUri, name, isGroup }) => (
         )}
     </View>
 ));
-
 
 const SelectedAvatars = memo(({ selectedItems, onRemove }) => {
     if (!selectedItems?.length) return null;
@@ -118,10 +117,10 @@ const ContactItem = memo(({ item, onToggle, selectedTab }) => {
 
     return (
         <TouchableOpacity style={styles.contactItem} onPress={handlePress}>
-            <ContactImage 
-                imageUri={selectedTab === "groups" ? item.groupImage : item.avatar} 
-                name={item.name} 
-                isGroup={selectedTab === "groups"} 
+            <ContactImage
+                imageUri={selectedTab === "groups" ? item.groupImage : item.avatar}
+                name={item.name}
+                isGroup={selectedTab === "groups"}
             />
 
             <View style={styles.contactInfo}>
@@ -160,7 +159,7 @@ const ContactList = ({
     const [friends, setFriends] = useState([]);
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedTab, setSelectedTab] = useState("friends");
+    const [selectedTab, setSelectedTab] = useState(fetchedFriends.length > 5 ? "friends" : "contacts");
     const [searchQuery, setSearchQuery] = useState("");
     const [filteredData, setFilteredData] = useState([]);
     const { id } = useUser();
@@ -249,11 +248,11 @@ const ContactList = ({
                         const updatedFriends = groupData.friends || [];
                         const updatedGroups = groupData.groups || [];
                         const updatedContacts = groupData.contacts || contactsRef.current;
-                
+
                         setFriends(updatedFriends);
                         setGroups(updatedGroups);
                         setContacts(updatedContacts);
-                
+
                         friendsRef.current = updatedFriends;
                         groupsRef.current = updatedGroups;
                         contactsRef.current = updatedContacts;
@@ -321,17 +320,18 @@ const ContactList = ({
         selectedFriends.forEach(friend => {
             memberMap.set(friend.id, {
                 ...friend,
-                type: "friend"
+                type: "friend",
             });
         });
 
         selectedGroups.forEach(group => {
             group.members.forEach(member => {
-                if (member.id !== id) memberMap.set(member.id, {
-                    ...member,
-                    type: "group"
-                });
-            })
+                if (member.id !== id)
+                    memberMap.set(member.id, {
+                        ...member,
+                        type: "group",
+                    });
+            });
         });
         const result = Array.from(memberMap.values());
         return result;
@@ -389,7 +389,6 @@ const ContactList = ({
                     selectedGroupMemberIds.has(userId)
                 );
             };
-              
 
             const updateList = (list, setList, ref) => {
                 const itemToUpdate = list.find(item => item.id === id);
@@ -467,7 +466,6 @@ const ContactList = ({
             uniqueMemberIds: Array.from(uniqueMembersMap.values()), // Use keys() for unique IDs
         };
 
-
         onSelectPeople(selectedData);
     }, [contacts, friends, groups, id, onSelectPeople]);
 
@@ -521,6 +519,26 @@ const ContactList = ({
 
             <View style={styles.tabSection}>
                 <View style={styles.tabButtons}>
+                    <>
+                        {fetchedFriends.length < 5 && (
+                            <TouchableOpacity
+                                style={[
+                                    styles.tabButton,
+                                    selectedTab === "contacts" && styles.tabButtonActive,
+                                ]}
+                                onPress={() => setSelectedTab("contacts")}
+                            >
+                                <Text
+                                    style={[
+                                        styles.tabButtonText,
+                                        selectedTab === "contacts" && styles.activeButtonText,
+                                    ]}
+                                >
+                                    Contacts
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    </>
                     <TouchableOpacity
                         style={[
                             styles.tabButton,
@@ -553,22 +571,26 @@ const ContactList = ({
                             Groups
                         </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[
-                            styles.tabButton,
-                            selectedTab === "contacts" && styles.tabButtonActive,
-                        ]}
-                        onPress={() => setSelectedTab("contacts")}
-                    >
-                        <Text
-                            style={[
-                                styles.tabButtonText,
-                                selectedTab === "contacts" && styles.activeButtonText,
-                            ]}
-                        >
-                            Contacts
-                        </Text>
-                    </TouchableOpacity>
+                    <>
+                        {!(fetchedFriends.length < 5) && (
+                            <TouchableOpacity
+                                style={[
+                                    styles.tabButton,
+                                    selectedTab === "contacts" && styles.tabButtonActive,
+                                ]}
+                                onPress={() => setSelectedTab("contacts")}
+                            >
+                                <Text
+                                    style={[
+                                        styles.tabButtonText,
+                                        selectedTab === "contacts" && styles.activeButtonText,
+                                    ]}
+                                >
+                                    Contacts
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    </>
                 </View>
             </View>
 

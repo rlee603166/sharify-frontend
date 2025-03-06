@@ -8,6 +8,7 @@ import LoadingWrapper from "../../components/main/LoadingWrapper";
 import { Header } from "./LoginScreen";
 import theme from "../../theme/index.js";
 import { useUser } from "../../services/UserProvider";
+import UserService from "../../services/UserService";
 
 const SignUpScreen = ({ navigation }) => {
     const [newUser, setNewUser] = useState({});
@@ -18,6 +19,7 @@ const SignUpScreen = ({ navigation }) => {
     const apiURL = "http://47.144.148.193:8000/api/v1/users/venmo/";
     const [smsError, setSMSError] = useState(null);
 
+    const userService = new UserService();
     const { register } = useUser();
 
     const handlePhone = async phone => {
@@ -105,10 +107,15 @@ const SignUpScreen = ({ navigation }) => {
         }
     };
 
+    const handlePhoneCheck = async phoneNumber => {
+        const response = await userService.getSMS(phoneNumber);
+        return response;
+    };
+
     const render = () => {
         switch (step) {
             case 0:
-                return <PhoneInputView onNext={handlePhone} />;
+                return <PhoneInputView onNext={handlePhone} handlePhoneNumber={handlePhoneCheck} />;
             case 1:
                 return (
                     <SMSVerificationView

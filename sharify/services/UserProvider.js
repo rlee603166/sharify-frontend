@@ -360,7 +360,7 @@ export const UserProvider = ({ children }) => {
         }
     };
 
-    const requestVerificationCode = async username => {
+    const requestVerificationCode = async phoneNumber => {
         try {
             const response = await fetch(`${apiURL}/auth/request-code`, {
                 method: "POST",
@@ -368,7 +368,7 @@ export const UserProvider = ({ children }) => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    username: username,
+                    phone: phoneNumber,
                 }),
             });
 

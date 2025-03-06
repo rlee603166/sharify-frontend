@@ -12,7 +12,7 @@ import {
 import theme from "../../theme/index";
 import UserService from "../../services/UserService";
 
-const PhoneInputView = ({ onNext }) => {
+const PhoneInputView = ({ onNext, handlePhoneNumber, isLogin }) => {
     const [countryCode, setCountryCode] = useState("1");
     const [rawPhoneNumber, setRawPhoneNumber] = useState("");
     const [errorMessage, setErrorMessage] = useState(null);
@@ -66,8 +66,10 @@ const PhoneInputView = ({ onNext }) => {
 
         try {
             const formattedPhone = `+${countryCode}${rawPhoneNumber}`;
-            // const isAvailable = await PhoneService.checkAvailability(formattedPhone);
-            const response = await userService.getSMS(rawPhoneNumber);
+            const response = await handlePhoneNumber(rawPhoneNumber);
+            console.log(response);
+
+            if (response && isLogin) return;
 
             if (response.status === "pending") {
                 onNext(rawPhoneNumber);

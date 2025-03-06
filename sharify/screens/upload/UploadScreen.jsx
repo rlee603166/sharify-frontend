@@ -29,8 +29,10 @@ const UploadScreen = ({ navigation }) => {
     const receiptIDRef = useRef(null);
     const [apiData, setApiData] = useState({});
     const [ocrData, setOcrData] = useState({});
+
     const [receiptItems, setReceiptItems] = useState([]);
     const [receiptTotal, setReceiptTotal] = useState(0);
+    const [additional, setAdditional] = useState({});
 
     const { id } = useUser();
     const { friends, loadFriends } = useFriends();
@@ -56,11 +58,10 @@ const UploadScreen = ({ navigation }) => {
     }, [receiptID]);
 
     const optimizer = async uri => {
-        const result = await ImageManipulator.manipulateAsync(
-            uri,
-            [{ resize: { width: 750 } }],
-            { compress: 0.9, format: "webp" }
-        );
+        const result = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 750 } }], {
+            compress: 0.9,
+            format: "webp",
+        });
         return result.uri;
     };
 
@@ -109,6 +110,7 @@ const UploadScreen = ({ navigation }) => {
         setPhotoUri(null);
         setReceiptID(null);
         setReceiptItems([]);
+        setAdditional({});
         setReceiptTotal(0);
     };
 
@@ -197,6 +199,7 @@ const UploadScreen = ({ navigation }) => {
                             return sum + (isNaN(price) ? 0 : price);
                         }, 0);
                         setReceiptTotal(total);
+                        setAdditional(receiptData.additional);
                         setIsLoading(false);
                         return;
                     }
@@ -270,6 +273,7 @@ const UploadScreen = ({ navigation }) => {
                         ocrData={{
                             items: receiptItems,
                             subtotal: receiptTotal,
+                            additional: additional
                         }}
                         setPeopleHashMap={setPeopleHashMap}
                         onUpdatePeople={items => handleSelectPeople(items, true)}

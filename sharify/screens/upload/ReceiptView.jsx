@@ -409,7 +409,9 @@ const ReceiptView = ({
                     );
                 }
             },
-            photoUri
+            photoUri,
+            subtotal: totalAmount,
+            extractedTax: (ocrData.additional && ocrData.additional.tax)
         });
     };
 
