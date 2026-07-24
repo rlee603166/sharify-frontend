@@ -1,11 +1,11 @@
 import FormData from "form-data";
 import * as ImageManipulator from "expo-image-manipulator";
 import { useUser } from "./UserProvider";
+import { API_BASE_URL } from "../config";
 
 class UserService {
     constructor() {
-        // this.apiURL = "http://127.0.0.1:8000/api/v1";
-        this.apiURL = "http://47.144.148.193:8000/api/v1";
+        this.apiURL = API_BASE_URL;
         this.state = useUser();
     }
 

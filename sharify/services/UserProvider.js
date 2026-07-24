@@ -4,12 +4,12 @@ import * as SecureStore from "expo-secure-store";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { Image } from "expo-image";
+import { API_BASE_URL } from "../config";
 
 const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
-    // const apiURL = "http://localhost:8000/api/v1";
-    const apiURL = "http://47.144.148.193:8000/api/v1";
+    const apiURL = API_BASE_URL;
 
     const [state, setState] = useState({});
 

@@ -1,9 +1,10 @@
 import { Image, View, Text, StyleSheet, Pressable } from "react-native";
 import { useEffect, useState } from "react";
 import theme from "../../theme/index.js";
+import { API_BASE_URL } from "../../config";
 
 const Venmo = ({ user, onConfirm, onDeny, isLoading }) => {
-    const apiURL = "http://47.144.148.193:8000/api/v1/users/venmo/";
+    const apiURL = `${API_BASE_URL}/users/venmo/`;
     const [error, setError] = useState(null);
     const [userNotFound, setUserNotFound] = useState(false);
 

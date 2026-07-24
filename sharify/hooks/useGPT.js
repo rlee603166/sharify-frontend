@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import * as FileSystem from "expo-file-system";
 import * as SecureStore from "expo-secure-store";
 import OpenAI from "openai";
+import { API_BASE_URL } from "../config";
 
 const useGPT = () => {
     const gptInstance = useRef(null);
@@ -14,7 +15,7 @@ const useGPT = () => {
 
     class GPT {
         constructor() {
-            this.apiURL = "http://47.144.148.193:8000/api/v1/gpt/";
+            this.apiURL = `${API_BASE_URL}/gpt/`;
             this.client = null;
             this.setClient();
         }

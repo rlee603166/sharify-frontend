@@ -9,6 +9,7 @@ import { Header } from "./LoginScreen";
 import theme from "../../theme/index.js";
 import { useUser } from "../../services/UserProvider";
 import UserService from "../../services/UserService";
+import { API_BASE_URL } from "../../config";
 
 const SignUpScreen = ({ navigation }) => {
     const [newUser, setNewUser] = useState({});
@@ -16,7 +17,7 @@ const SignUpScreen = ({ navigation }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const prompt = "Enter your Venmo username:";
-    const apiURL = "http://47.144.148.193:8000/api/v1/users/venmo/";
+    const apiURL = `${API_BASE_URL}/users/venmo/`;
     const [smsError, setSMSError] = useState(null);
 
     const userService = new UserService();
@@ -32,7 +33,7 @@ const SignUpScreen = ({ navigation }) => {
     };
 
     const handleSMS = async code => {
-        const url = "http://47.144.148.193:8000/api/v1/users/registerSMS";
+        const url = `${API_BASE_URL}/users/registerSMS`;
         const response = await fetch(url, {
             method: "POST",
             headers: {
