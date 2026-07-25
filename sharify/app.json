@@ -2,7 +2,7 @@
   "expo": {
     "name": "Sharify",
     "slug": "sharify",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "icon": "./assets/sharifylogo.png",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -86,7 +86,7 @@
         "projectId": "a3ff316a-a3aa-4dc6-820f-a71befed088f"
       }
     },
-    "runtimeVersion": "1.0.1",
+    "runtimeVersion": "1.0.2",
     "updates": {
       "url": "https://u.expo.dev/a3ff316a-a3aa-4dc6-820f-a71befed088f"
     }
