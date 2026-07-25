@@ -352,7 +352,15 @@ export const UserProvider = ({ children }) => {
 
             const data = await response.json();
 
-            console.log(`token: ${JSON.stringify(data, null, 2)}`);
+            if (!response.ok || !data.access_token) {
+                const message = data?.detail || "Login failed. Please check your code and try again.";
+                console.error("Login failed:", message);
+                setState(prev => ({
+                    ...prev,
+                    error: message,
+                }));
+                return false;
+            }
 
             await SecureStore.setItemAsync("access_token", data.access_token);
             await SecureStore.setItemAsync("refresh_token", data.refresh_token);
@@ -371,7 +379,7 @@ export const UserProvider = ({ children }) => {
             console.error("Login failed:", error);
             setState(prev => ({
                 ...prev,
-                error: "Login failed",
+                error: "Login failed. Please try again.",
             }));
             return false;
         } finally {
@@ -391,16 +399,29 @@ export const UserProvider = ({ children }) => {
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error("Failed to send verification code");
+            const data = await response.json();
+
+            if (!response.ok || data?.status === "failed") {
+                const message =
+                    data?.detail ||
+                    "Couldn't send verification code. Please check the number and try again.";
+                setState(prev => ({
+                    ...prev,
+                    error: message,
+                }));
+                return false;
             }
 
-            const data = response.json();
-            return data;
-        } catch (error) {
             setState(prev => ({
                 ...prev,
-                error: "Failed to send verification code",
+                error: null,
+            }));
+            return data;
+        } catch (error) {
+            console.error("Request verification code failed:", error);
+            setState(prev => ({
+                ...prev,
+                error: "Couldn't send verification code. Please try again.",
             }));
             return false;
         }
